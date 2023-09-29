@@ -26,14 +26,14 @@ function initializeLiff(liffId) {
 
 function scanQR() {
     liff
-      .scanCodeV2()
-      .then((result) => {
-        console.log(result.value);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  },
+        .scanCodeV2()
+        .then((result) => {
+            console.log(result.value);
+        })
+        .catch((err) => {
+            console.log(err);
+        });
+}
 
 function showPoint(token) {
     // var apiurl = "https://members-api-toslpgfgpq-uc.a.run.app";
