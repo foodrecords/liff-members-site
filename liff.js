@@ -1,6 +1,10 @@
 $(document).ready(function () {
     const liffId = "2000938587-06YmdyJ5";
     initializeLiff(liffId);
+    var code = getParam('code');
+    if (code) {
+        checkCode(code);
+    }
 })
 
 function initializeLiff(liffId) {
@@ -30,6 +34,10 @@ function scanQR() {
         .scanCodeV2()
         .then((result) => {
             console.log(result.value);
+            var code = getParam('code', result.value);
+            if (code) {
+                checkCode(code);
+            }
         })
         .catch((err) => {
             console.log(err);
@@ -39,7 +47,6 @@ function scanQR() {
 function showPoint(token) {
     // var apiurl = "https://members-api-toslpgfgpq-uc.a.run.app";
     var apiurl = "http://localhost:9090";
-    $.getJSON(apiurl + '/members', null)
     $.ajax({
         beforeSend: function(request) {
             request.setRequestHeader('Authorization', 'Bearer '+token);
@@ -56,4 +63,39 @@ function showPoint(token) {
             }
         }
     });
+}
+
+function checkCode(code) {
+    var accessToken = liff.getAccessToken();
+    
+    // var apiurl = "https://members-api-toslpgfgpq-uc.a.run.app";
+    var apiurl = "http://localhost:9090";
+    $.ajax({
+        beforeSend: function(request) {
+            request.setRequestHeader('Authorization', 'Bearer '+accessToken);
+        },
+        dataType: "json",
+        url: apiurl + '/qrcode',
+        type: 'post',
+        data: { code: code },
+        success: function(data) {
+            if (data.data) {
+                $('#point-card-balance span').text(data.data.point);
+                $('#point-card-number span').text(data.data.number);
+            } else {
+                $('#point').text('エラー');
+            }
+        }
+    });
+}
+
+
+function getParam(name, url) {
+    if (!url) url = window.location.href;
+    name = name.replace(/[\[\]]/g, "\\$&");
+    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+        results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
 }
