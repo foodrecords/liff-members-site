@@ -1,7 +1,6 @@
 $(document).ready(function () {
     const liffId = "2000938587-06YmdyJ5";
     initializeLiff(liffId);
-    showPoint();
 })
 
 function initializeLiff(liffId) {
@@ -15,7 +14,7 @@ function initializeLiff(liffId) {
                 liff.login({redirectUri: location.href});
             }else{
                 const accessToken = liff.getAccessToken();
-                console.log(accessToken);
+                showPoint(accessToken);
             }
         })
         .catch((err) => {
@@ -23,7 +22,7 @@ function initializeLiff(liffId) {
         });
 }
 
-function showPoint() {
+function showPoint(token) {
     var apiurl = "https://members-api-toslpgfgpq-uc.a.run.app";
     $.getJSON(apiurl + '/members', {
         member_id: 'test'
@@ -31,7 +30,8 @@ function showPoint() {
     .done(function(data) {
         console.log(data);
         if (data.data) {
-            $('#point').text(data.data.point + "points");
+            $('#point-card-balance span').text(data.data.point);
+            $('#point-card-number span').text(data.data.number);
         } else {
             $('#point').text('エラー');
         }

@@ -4,8 +4,7 @@ body{
 }
 
 header{
-    height: 75px;
-    background-color: #181818;
+    height: 80px;
 }
 
 iframe{
@@ -29,4 +28,105 @@ iframe{
     font-size: 32px;
     margin: 0;
     color: #ffe0e6;
+}
+
+
+#header-logo {
+    flex: none;
+    height: auto;
+    margin: 20px 0px 0px 20px;
+    width: 68px;
+}
+
+.card-main {
+    padding: 20px;
+}
+
+.point-card {
+    align-content: center;
+    align-items: center;
+    background: #f29c97;
+    border-radius: 12px;
+    height: auto;
+    justify-content: center;
+    padding: 40px 40px 40px 40px;
+    max-width: 400px;
+    width: 100%;
+}
+
+.point-card p {
+    color: #333;
+    font-family: 'Roboto';
+    font-size: 24px;
+    font-weight: 400;
+    height: auto;
+    line-height: 1.4;
+    text-align: center;
+    width: auto;
+    max-width: 100%;
+    justify-content: center;
+}
+
+#point-card-balance {
+    font-size: 64px;
+    font-weight: 700;
+}
+
+#point-card-number {
+    font-size: 12px;
+    text-align: right;
+}
+
+.sticky-button {
+    position: fixed;
+    bottom: 20px;
+    width: 100%;
+}
+
+.action-button {
+    display: table;
+    margin: auto;
+    align-content: center;
+    align-items: center;
+    background: linear-gradient(var(--g-angle), var(--g-color-0) var(--g-position-0), var(--g-color-1) var(--g-position-1));
+    border-radius: 30px;
+    box-shadow: 3px 3px rgba(0,0,0,0.2);
+    flex: none;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    height: 60px;
+    justify-content: center;
+    width: 300px;
+    max-width: 100%;
+    --g-color-0: #f29c97;
+    --g-position-0: 0%;
+    --g-color-1: #ffffff;
+    --g-position-1: 100%;
+    --g-color-2: #ffffff;
+    --g-position-2: 100%;
+    --g-color-3: #ffffff;
+    --g-position-3: 100%;
+    --g-color-4: #ffffff;
+    --g-position-4: 100%;
+    --g-color-5: #ffffff;
+    --g-position-5: 100%;
+    --g-color-6: #ffffff;
+    --g-position-6: 100%;
+    --g-color-7: #ffffff;
+    --g-position-7: 100%;
+    --g-color-8: #ffffff;
+    --g-position-8: 100%;
+    --g-color-9: #ffffff;
+    --g-position-9: 100%;
+    --g-color-10: #ffffff;
+    --g-position-10: 100%;
+    --g-color-11: #ffffff;
+    --g-position-11: 100%;
+    --g-angle: 90deg;
+}
+
+#scan-qr-code {
+    display: table-cell;
+    text-align: center;
+    vertical-align: middle;
 }
