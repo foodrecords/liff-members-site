@@ -15,11 +15,10 @@ function initializeLiff(liffId) {
             }else{
                 const accessToken = liff.getAccessToken();
                 if (accessToken) {
+                    showPoint(accessToken);
                     var code = getParam('code');
                     if (code) {
                         checkCode(accessToken, code);
-                    } else {
-                        showPoint(accessToken);
                     }
                 }
             }
