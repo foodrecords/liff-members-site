@@ -23,17 +23,23 @@ function initializeLiff(liffId) {
 }
 
 function showPoint(token) {
-    var apiurl = "https://members-api-toslpgfgpq-uc.a.run.app";
-    $.getJSON(apiurl + '/members', {
-        member_id: 'test'
-    })
-    .done(function(data) {
-        console.log(data);
-        if (data.data) {
-            $('#point-card-balance span').text(data.data.point);
-            $('#point-card-number span').text(data.data.number);
-        } else {
-            $('#point').text('エラー');
+    // var apiurl = "https://members-api-toslpgfgpq-uc.a.run.app";
+    var apiurl = "http://localhost:9090";
+    $.getJSON(apiurl + '/members', nil)
+    $.ajax({
+        beforeSend: function(request) {
+            request.setRequestHeader('Authorization', 'Bearer '+token);
+        },
+        dataType: "json",
+        url: apiurl + '/members',
+        success: function(data) {
+            console.log(data);
+            if (data.data) {
+                $('#point-card-balance span').text(data.data.point);
+                $('#point-card-number span').text(data.data.number);
+            } else {
+                $('#point').text('エラー');
+            }
         }
     });
 }
