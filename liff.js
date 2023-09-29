@@ -25,7 +25,7 @@ function initializeLiff(liffId) {
 function showPoint(token) {
     // var apiurl = "https://members-api-toslpgfgpq-uc.a.run.app";
     var apiurl = "http://localhost:9090";
-    $.getJSON(apiurl + '/members', nil)
+    $.getJSON(apiurl + '/members', null)
     $.ajax({
         beforeSend: function(request) {
             request.setRequestHeader('Authorization', 'Bearer '+token);
