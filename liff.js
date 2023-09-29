@@ -65,6 +65,10 @@ function showPoint(token) {
             } else {
                 $('#point').text('エラー');
             }
+        },
+        error: function (jqXHR, thrownError) {
+            alert(jqXHR.status);
+            alert(thrownError);
         }
     });
 }
@@ -87,6 +91,10 @@ function checkCode(token, code) {
             } else {
                 $('#point').text('エラー');
             }
+        },
+        error: function (jqXHR, thrownError) {
+            alert(jqXHR.status);
+            alert(thrownError);
         }
     });
 }
