@@ -1,5 +1,5 @@
 $(document).ready(function () {
-    var liffId = propcess.env.LIFF_ID;
+    var liffId = process.env.LIFF_ID;
     initializeLiff(liffId);
     showPoint();
 })
@@ -26,7 +26,7 @@ function initializeLiff(liffId) {
 }
 
 function showPoint() {
-    var apiurl = propcess.env.API_URL;
+    var apiurl = process.env.API_URL;
     $.getJSON(apiurl + '/member', {
         member_id: 'test'
     })
