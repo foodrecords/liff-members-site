@@ -86,6 +86,9 @@ function checkCode(token, code) {
             if (data.data) {
                 $('#point-card-balance span').text(data.data.point);
                 $('#point-card-number span').text(data.data.number);
+                if (data.data.get_point) {
+                    $('#point-card-get').text(data.data.get_point + ' point get!').css('visibility','visible');
+                }
             } else {
                 $('#point').text('エラー');
             }
