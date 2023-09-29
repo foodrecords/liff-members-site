@@ -1,6 +1,7 @@
 $(document).ready(function () {
     var liffId = propcess.env.LIFF_ID;
     initializeLiff(liffId);
+    showPoint();
 })
 
 function initializeLiff(liffId) {
@@ -22,4 +23,20 @@ function initializeLiff(liffId) {
         .catch((err) => {
             window.alert('LIFF Initialization failed: ' + err);
         });
+}
+
+function showPoint() {
+    var apiurl = propcess.env.API_URL;
+    $.getJSON(apiurl + '/member', {
+        member_id: 'test'
+    })
+    .done(function(data) {
+        console.log(data);
+        if (data.results) {
+            var result = data.results[0];
+            $('#point').val(result.point);
+        } else {
+            $('#point').val('エラー');
+        }
+    });
 }
