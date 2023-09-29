@@ -31,9 +31,9 @@ function showPoint() {
     .done(function(data) {
         console.log(data);
         if (data.data) {
-            $('#point').val(data.data.point + "points");
+            $('#point').text(data.data.point + "points");
         } else {
-            $('#point').val('エラー');
+            $('#point').text('エラー');
         }
     });
 }
