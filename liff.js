@@ -72,8 +72,8 @@ function showPoint(token) {
 }
 
 function checkCode(token, code) {    
-    // var apiurl = "https://members-api-toslpgfgpq-uc.a.run.app";
-    var apiurl = "http://localhost:9090";
+    var apiurl = "https://members-api-toslpgfgpq-uc.a.run.app";
+    // var apiurl = "http://localhost:9090";
     $.ajax({
         beforeSend: function(request) {
             request.setRequestHeader('Authorization', 'Bearer '+token);
