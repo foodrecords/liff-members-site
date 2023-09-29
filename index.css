@@ -72,6 +72,12 @@ iframe{
     font-weight: 700;
 }
 
+#point-card-get {
+    font-size: 24px;
+    font-weight: 400;
+    visibility: hidden;
+}
+
 #point-card-number {
     font-size: 12px;
     text-align: right;
