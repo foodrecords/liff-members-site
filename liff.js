@@ -26,8 +26,8 @@ function initializeLiff(liffId) {
 }
 
 function showPoint() {
-    var apiurl = process.env.API_URL;
-    $.getJSON("https://members-api-toslpgfgpq-uc.a.run.app" + '/member', {
+    var apiurl = "https://members-api-toslpgfgpq-uc.a.run.app";
+    $.getJSON(apiurl + '/member', {
         member_id: 'test'
     })
     .done(function(data) {
