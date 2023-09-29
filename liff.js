@@ -79,7 +79,7 @@ function checkCode(token, code) {
         dataType: "json",
         url: apiurl + '/qrcode',
         type: 'post',
-        data: { code: code },
+        data: JSON.stringify({ code: code }),
         success: function(data) {
             if (data.data) {
                 $('#point-card-balance span').text(data.data.point);
