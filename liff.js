@@ -14,7 +14,9 @@ function initializeLiff(liffId) {
                 liff.login({redirectUri: location.href});
             }else{
                 const accessToken = liff.getAccessToken();
-                showPoint(accessToken);
+                if (accessToken) {
+                    showPoint(accessToken);
+                }
             }
         })
         .catch((err) => {
