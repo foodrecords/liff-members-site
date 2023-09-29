@@ -25,6 +25,7 @@ function initializeLiff(liffId) {
 }
 
 function scanQR() {
+    console.log('scan');
     liff
         .scanCodeV2()
         .then((result) => {
