@@ -1,5 +1,5 @@
 $(document).ready(function () {
-    var liffId = process.env.LIFF_ID;
+    var liffId = "2000938587-06YmdyJ5";
     initializeLiff(liffId);
     showPoint();
 })
@@ -27,7 +27,7 @@ function initializeLiff(liffId) {
 
 function showPoint() {
     var apiurl = process.env.API_URL;
-    $.getJSON(apiurl + '/member', {
+    $.getJSON("https://members-api-toslpgfgpq-uc.a.run.app" + '/member', {
         member_id: 'test'
     })
     .done(function(data) {
