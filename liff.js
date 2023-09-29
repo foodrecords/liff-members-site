@@ -66,9 +66,8 @@ function showPoint(token) {
                 $('#point').text('エラー');
             }
         },
-        error: function (jqXHR, thrownError) {
-            alert(jqXHR.status);
-            alert(thrownError);
+        error: function (jqXHR) {
+            alert(jqXHR.responseJSON.message);
         }
     });
 }
@@ -92,9 +91,8 @@ function checkCode(token, code) {
                 $('#point').text('エラー');
             }
         },
-        error: function (jqXHR, thrownError) {
-            alert(jqXHR.status);
-            alert(thrownError);
+        error: function (jqXHR) {
+            alert(jqXHR.responseJSON.message);
         }
     });
 }
