@@ -1,0 +1,32 @@
+body{
+    margin: 0;
+    background-color: #ffe0e6;
+}
+
+header{
+    height: 75px;
+    background-color: #181818;
+}
+
+iframe{
+    width: 100%;
+    height: calc(100vh - 75px);
+}
+
+.header-block{
+    width: 95%;
+    height: 100%;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 32px;
+}
+
+.logo {
+    font-family: 'Roboto', sans-serif;
+    font-size: 32px;
+    margin: 0;
+    color: #ffe0e6;
+}
