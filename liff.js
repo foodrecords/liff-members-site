@@ -34,7 +34,7 @@ function showPoint() {
         console.log(data);
         if (data.results) {
             var result = data.results[0];
-            $('#point').val(result.point);
+            $('#point').val(result.point + "points");
         } else {
             $('#point').val('エラー');
         }
