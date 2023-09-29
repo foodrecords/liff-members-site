@@ -1,10 +1,6 @@
 $(document).ready(function () {
     const liffId = "2000938587-06YmdyJ5";
     initializeLiff(liffId);
-    var code = getParam('code');
-    if (code) {
-        checkCode(code);
-    }
 })
 
 function initializeLiff(liffId) {
@@ -19,7 +15,12 @@ function initializeLiff(liffId) {
             }else{
                 const accessToken = liff.getAccessToken();
                 if (accessToken) {
-                    showPoint(accessToken);
+                    var code = getParam('code');
+                    if (code) {
+                        checkCode(accessToken, code);
+                    } else {
+                        showPoint(accessToken);
+                    }
                 }
             }
         })
@@ -36,7 +37,10 @@ function scanQR() {
             console.log(result.value);
             var code = getParam('code', result.value);
             if (code) {
-                checkCode(code);
+                const accessToken = liff.getAccessToken();
+                if (accessToken) {
+                    checkCode(accessToken, code);
+                }
             }
         })
         .catch((err) => {
@@ -65,14 +69,12 @@ function showPoint(token) {
     });
 }
 
-function checkCode(code) {
-    var accessToken = liff.getAccessToken();
-    
+function checkCode(token, code) {    
     // var apiurl = "https://members-api-toslpgfgpq-uc.a.run.app";
     var apiurl = "http://localhost:9090";
     $.ajax({
         beforeSend: function(request) {
-            request.setRequestHeader('Authorization', 'Bearer '+accessToken);
+            request.setRequestHeader('Authorization', 'Bearer '+token);
         },
         dataType: "json",
         url: apiurl + '/qrcode',
