@@ -1,6 +1,5 @@
 $(document).ready(function () {
-    const liffId = "2000938587-06YmdyJ5";
-    initializeLiff(liffId);
+    initializeLiff(window.APP_CONFIG.liffId);
 })
 
 function initializeLiff(liffId) {
@@ -48,8 +47,8 @@ function scanQR() {
 }
 
 function showPoint(token) {
-    var apiurl = "https://members-api-toslpgfgpq-uc.a.run.app";
-    // var apiurl = "http://localhost:9090";
+    var apiurl = window.APP_CONFIG.apiUrl;
+    console.log('[API] GET ' + apiurl + '/members');
     $.ajax({
         beforeSend: function(request) {
             request.setRequestHeader('Authorization', 'Bearer '+token);
@@ -57,7 +56,7 @@ function showPoint(token) {
         dataType: "json",
         url: apiurl + '/members',
         success: function(data) {
-            console.log(data);
+            console.log('[API] /members response:', JSON.stringify(data));
             if (data.data) {
                 $('#point-card-balance span').text(data.data.point);
                 $('#point-card-number span').text(data.data.number);
@@ -66,14 +65,16 @@ function showPoint(token) {
             }
         },
         error: function (jqXHR) {
-            alert(jqXHR.responseJSON.message);
+            var msg = jqXHR.responseJSON && jqXHR.responseJSON.message || jqXHR.statusText || 'network error (status=' + jqXHR.status + ')';
+            console.error('[API] /members error:', jqXHR.status, msg);
+            alert(msg);
         }
     });
 }
 
-function checkCode(token, code) {    
-    var apiurl = "https://members-api-toslpgfgpq-uc.a.run.app";
-    // var apiurl = "http://localhost:9090";
+function checkCode(token, code) {
+    var apiurl = window.APP_CONFIG.apiUrl;
+    console.log('[API] POST ' + apiurl + '/qrcode, code=' + code);
     $.ajax({
         beforeSend: function(request) {
             request.setRequestHeader('Authorization', 'Bearer '+token);
@@ -83,6 +84,7 @@ function checkCode(token, code) {
         type: 'post',
         data: JSON.stringify({ code: code }),
         success: function(data) {
+            console.log('[API] /qrcode response:', JSON.stringify(data));
             if (data.data) {
                 $('#point-card-balance span').text(data.data.point);
                 $('#point-card-number span').text(data.data.number);
@@ -94,7 +96,9 @@ function checkCode(token, code) {
             }
         },
         error: function (jqXHR) {
-            alert(jqXHR.responseJSON.message);
+            var msg = jqXHR.responseJSON && jqXHR.responseJSON.message || jqXHR.statusText || 'network error (status=' + jqXHR.status + ')';
+            console.error('[API] /qrcode error:', jqXHR.status, msg);
+            alert(msg);
         }
     });
 }
