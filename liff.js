@@ -373,12 +373,14 @@ function renderUpcoming(upcoming) {
         $list.append(buildUpcomingCard(firstNonGoal, 'NEXT'));
     }
 
-    // 未取得のランクゴールをすべて表示
-    upcoming.forEach(function (item) {
-        if (item.is_rank_goal) {
-            $list.append(buildUpcomingCard(item, 'RANK GOAL'));
-        }
-    });
+    // 最初の未取得ランクゴールのみ表示
+    var firstGoal = null;
+    for (var j = 0; j < upcoming.length; j++) {
+        if (upcoming[j].is_rank_goal) { firstGoal = upcoming[j]; break; }
+    }
+    if (firstGoal && firstGoal !== firstNonGoal) {
+        $list.append(buildUpcomingCard(firstGoal, 'RANK GOAL'));
+    }
 }
 
 function buildUpcomingCard(item, label) {
