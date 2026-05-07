@@ -2,120 +2,347 @@
 <html lang="ja">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>チェックイン</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>ポイントカード | AGARUKE LAB.</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            background: #111;
-            color: #fff;
-            font-family: 'Helvetica Neue', sans-serif;
+            background: #fff;
+            font-family: 'Noto Sans JP', sans-serif;
+            min-height: 100vh;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
+            padding: 20px 16px;
+        }
+
+        .poster {
+            width: min(440px, 100%);
+        }
+
+        /* ── Header ── */
+        .poster-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .h-line { flex: 1; height: 2px; background: #111; }
+        .h-text  { font-size: 0.85rem; font-weight: 900; letter-spacing: 0.12em; white-space: nowrap; }
+
+        /* ── Heading ── */
+        .poster-heading {
+            text-align: center;
+            line-height: 1.1;
+            margin-bottom: 18px;
+        }
+        .heading-pink  { display: block; font-size: clamp(2.6rem, 9.5vw, 3.4rem); font-weight: 900; color: #E83060; }
+        .heading-black { display: block; font-size: clamp(2.6rem, 9.5vw, 3.4rem); font-weight: 900; color: #111; }
+
+        /* ── QR area ── */
+        .qr-section {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .qr-outer {
+            position: relative;
+            padding: 20px;
+        }
+
+        /* sparkle marks */
+        .spark {
+            position: absolute;
+            width: 3px;
+            border-radius: 2px;
+            background: #E83060;
+            transform-origin: center;
+        }
+        .sp1 { height: 20px; top:  4px; left: 14px; transform: rotate(-48deg); }
+        .sp2 { height: 13px; top: 11px; left:  4px; transform: rotate(-72deg); }
+        .sp3 { height: 20px; top:  4px; right: 14px; transform: rotate(48deg); }
+        .sp4 { height: 13px; top: 11px; right:  4px; transform: rotate(72deg); }
+        .sp5 { height: 18px; bottom: 8px; left: 10px; transform: rotate(32deg); }
+        .sp6 { height: 13px; bottom: 4px; left: 22px; transform: rotate(58deg); }
+        .sp7 { height: 18px; bottom: 8px; right: 10px; transform: rotate(-32deg); }
+        .sp8 { height: 13px; bottom: 4px; right: 22px; transform: rotate(-58deg); }
+
+        .qr-frame {
+            border: 3px solid #E83060;
+            border-radius: 16px;
+            padding: 14px;
+            background: #fff;
+        }
+
+        #qrcode canvas, #qrcode img { display: block; border-radius: 4px; }
+
+        /* ── Timer ── */
+        .timer-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 18px;
+            font-size: 0.75rem;
+            color: #aaa;
+        }
+        .timer-track { width: 100px; height: 3px; background: #eee; border-radius: 2px; overflow: hidden; }
+        #timer-bar {
+            height: 100%;
+            background: #E83060;
+            border-radius: 2px;
+            transition: width 0.9s linear, background 0.5s;
+        }
+        #timer-bar.expiring { background: #ff3030; }
+
+        /* ── Bottom grid ── */
+        .bottom-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            align-items: start;
+        }
+
+        /* Left – benefit */
+        .benefit-box {
+            background: #FFF0F4;
+            border-radius: 14px;
+            padding: 14px 10px 16px;
             text-align: center;
         }
-
-        #setup {
-            background: #222;
-            border-radius: 12px;
-            padding: 32px;
-            max-width: 360px;
-            width: 90%;
+        .benefit-tag {
+            display: inline-block;
+            background: #E83060;
+            color: #fff;
+            font-size: 0.72rem;
+            font-weight: 700;
+            border-radius: 20px;
+            padding: 3px 14px;
+            margin-bottom: 10px;
+        }
+        .food-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 2rem;
+            margin-bottom: 3px;
+        }
+        .food-or { font-size: 0.78rem; font-weight: 700; color: #555; }
+        .food-labels {
+            display: flex;
+            justify-content: space-around;
+            font-size: 0.64rem;
+            color: #333;
+            margin-bottom: 10px;
+            padding: 0 2px;
+        }
+        .free-wrap { display: inline-block; position: relative; }
+        .free-text {
+            font-size: clamp(1.7rem, 6vw, 2.2rem);
+            font-weight: 900;
+            color: #E83060;
+        }
+        .free-underline {
+            display: block;
+            height: 6px;
+            background: #FFE000;
+            border-radius: 3px;
+            margin-top: -2px;
         }
 
-        #setup h1 { font-size: 1.2rem; margin-bottom: 20px; color: #ccc; }
+        /* Right – rank */
+        .rank-box { padding: 2px 0; text-align: center; }
+        .rank-desc {
+            font-size: 0.82rem;
+            line-height: 1.7;
+            text-align: left;
+            margin-bottom: 12px;
+        }
+        .rank-desc .pink  { color: #E83060; font-weight: 700; }
+        .rank-desc .bold  { font-weight: 900; }
+        .rank-desc .ul    { position: relative; display: inline; }
+        .rank-desc .ul::after {
+            content: '';
+            position: absolute;
+            left: 0; right: 0; bottom: -1px;
+            height: 4px;
+            background: #FFE000;
+            border-radius: 2px;
+        }
 
+        .ranks {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+        }
+        .rank-circle {
+            width: 34px; height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 1rem;
+        }
+        .rc-green  { background: #3EAA5C; }
+        .rc-bronze { background: #C07830; }
+        .rc-silver { background: #A8B0B8; }
+        .rc-gold   { background: #D4A800; }
+        .rank-arrow { color: #888; font-size: 0.9rem; font-weight: 700; margin: 0 1px; }
+
+        .rank-names {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.6rem;
+            color: #666;
+            margin-top: 5px;
+            padding: 0 1px;
+        }
+        .rank-names span:nth-child(even) { flex: 1; }
+
+        /* ── Setup overlay ── */
+        #setup-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.65);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+        .setup-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 32px 24px;
+            max-width: 320px;
+            width: 90%;
+            text-align: center;
+        }
+        .setup-card h2 { font-size: 1rem; margin-bottom: 18px; color: #333; }
         #secret-input {
             width: 100%;
             padding: 12px;
             font-size: 1rem;
             border-radius: 8px;
-            border: 1px solid #444;
-            background: #333;
-            color: #fff;
+            border: 1px solid #ddd;
             margin-bottom: 12px;
+            font-family: inherit;
         }
-
         #start-btn {
             width: 100%;
             padding: 12px;
             font-size: 1rem;
-            background: #25a244;
+            background: #E83060;
             color: #fff;
             border: none;
             border-radius: 8px;
             cursor: pointer;
+            font-family: inherit;
+            font-weight: 700;
         }
-
-        #display { display: none; flex-direction: column; align-items: center; gap: 24px; padding: 32px 16px; }
-
-        .brand { font-size: 0.85rem; letter-spacing: 0.15em; color: #888; }
-
-        h1.title { font-size: 1.5rem; font-weight: 700; letter-spacing: 0.05em; }
-
-        #qrcode canvas, #qrcode img {
-            border-radius: 12px;
-            display: block;
-        }
-
-        .instructions {
-            font-size: 0.95rem;
-            color: #aaa;
-            line-height: 1.6;
-        }
-
-        #timer-wrap {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 0.85rem;
-            color: #888;
-        }
-
-        #timer-bar-track {
-            width: 120px;
-            height: 4px;
-            background: #333;
-            border-radius: 2px;
-            overflow: hidden;
-        }
-
-        #timer-bar {
-            height: 100%;
-            background: #25a244;
-            border-radius: 2px;
-            transition: width 0.9s linear, background 0.5s;
-        }
-
-        #timer-bar.expiring { background: #e05; }
-
-        #countdown { min-width: 2.5em; text-align: right; }
     </style>
 </head>
 <body>
 
-<!-- シークレット入力画面（URLハッシュがない場合のみ表示） -->
-<div id="setup">
-    <h1>シークレットを入力してください</h1>
-    <input id="secret-input" type="password" placeholder="CHECKIN_SECRET" autocomplete="off">
-    <button id="start-btn" onclick="startDisplay()">表示開始</button>
+<!-- セットアップオーバーレイ（URLハッシュがない場合のみ表示） -->
+<div id="setup-overlay">
+    <div class="setup-card">
+        <h2>シークレットキーを入力</h2>
+        <input id="secret-input" type="password" placeholder="CHECKIN_SECRET" autocomplete="off">
+        <button id="start-btn" onclick="startDisplay()">表示開始</button>
+    </div>
 </div>
 
-<!-- QRコード表示画面 -->
-<div id="display">
-    <p class="brand">FOOD RECORDS MEMBERS</p>
-    <h1 class="title">LINEでスキャン</h1>
-    <div id="qrcode"></div>
-    <p class="instructions">
-        LINEミニアプリを開き<br>「QRコードをスキャン」から読み取ってください
-    </p>
-    <div id="timer-wrap">
-        <div id="timer-bar-track"><div id="timer-bar"></div></div>
-        <span id="countdown">30</span>秒
+<div class="poster">
+
+    <!-- Header -->
+    <div class="poster-header">
+        <div class="h-line"></div>
+        <span class="h-text">AGARUKE LAB.</span>
+        <div class="h-line"></div>
+    </div>
+
+    <!-- Heading -->
+    <div class="poster-heading">
+        <span class="heading-pink">ポイントカード</span>
+        <span class="heading-black">始めました！</span>
+    </div>
+
+    <!-- QR Code -->
+    <div class="qr-section">
+        <div class="qr-outer">
+            <div class="spark sp1"></div>
+            <div class="spark sp2"></div>
+            <div class="spark sp3"></div>
+            <div class="spark sp4"></div>
+            <div class="spark sp5"></div>
+            <div class="spark sp6"></div>
+            <div class="spark sp7"></div>
+            <div class="spark sp8"></div>
+            <div class="qr-frame">
+                <div id="qrcode"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timer -->
+    <div class="timer-row">
+        <div class="timer-track"><div id="timer-bar"></div></div>
+        <span id="countdown">30</span>秒で更新
+    </div>
+
+    <!-- Bottom -->
+    <div class="bottom-grid">
+
+        <!-- 特典 -->
+        <div class="benefit-box">
+            <span class="benefit-tag">次回来店時に</span>
+            <div class="food-row">
+                <span>🥣</span>
+                <span class="food-or">or</span>
+                <span>🍚</span>
+            </div>
+            <div class="food-labels">
+                <span>トッピング</span>
+                <span>ライス大盛り</span>
+            </div>
+            <div class="free-wrap">
+                <span class="free-text">無料！</span>
+                <span class="free-underline"></span>
+            </div>
+        </div>
+
+        <!-- ランク -->
+        <div class="rank-box">
+            <div class="rank-desc">
+                ポイントがたまると<br>
+                <span class="pink">ステータスが上がって</span><br>
+                <span class="bold">特典が<span class="ul">アップグレード！</span></span>
+            </div>
+            <div class="ranks">
+                <div class="rank-circle rc-green">★</div>
+                <span class="rank-arrow">›</span>
+                <div class="rank-circle rc-bronze">★</div>
+                <span class="rank-arrow">›</span>
+                <div class="rank-circle rc-silver">★</div>
+                <span class="rank-arrow">›</span>
+                <div class="rank-circle rc-gold">★</div>
+            </div>
+            <div class="rank-names">
+                <span>Green</span><span></span>
+                <span>Bronze</span><span></span>
+                <span>Silver</span><span></span>
+                <span>Gold</span>
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -123,56 +350,57 @@
 <script src="config.js"></script>
 <script>
     const WINDOW_SEC = 30;
-    const LIFF_BASE_URL = 'https://members.food-records.com';
 
     var secret = null;
     var qrInstance = null;
     var timerInterval = null;
 
-    // URLハッシュからシークレットを取得
+    // URLハッシュからシークレットを自動取得
     (function () {
-        var hash = window.location.hash.slice(1);
-        var params = new URLSearchParams(hash);
+        var params = new URLSearchParams(window.location.hash.slice(1));
         var s = params.get('secret');
         if (s) {
             secret = s;
-            document.getElementById('setup').style.display = 'none';
-            startDisplayWithSecret(secret);
+            document.getElementById('setup-overlay').style.display = 'none';
+            startDisplayWithSecret(s);
         }
     })();
 
     function startDisplay() {
         var s = document.getElementById('secret-input').value.trim();
-        if (!s) { alert('シークレットを入力してください'); return; }
+        if (!s) { alert('シークレットキーを入力してください'); return; }
         secret = s;
-        document.getElementById('setup').style.display = 'none';
-        startDisplayWithSecret(secret);
+        document.getElementById('setup-overlay').style.display = 'none';
+        startDisplayWithSecret(s);
     }
 
     function startDisplayWithSecret(s) {
-        document.getElementById('display').style.display = 'flex';
         refreshQR(s);
         startTimer(s);
     }
 
-    // Go の totp.Generate と同じアルゴリズム:
-    // HMAC-SHA256(secret, BigEndian uint64(floor(unixTs / 30)))[:12 hex chars]
+    // Go の totp.Generate と同じアルゴリズム
+    // HMAC-SHA256(secret, BigEndian uint64(floor(unixTs / WINDOW_SEC)))[:12 hex chars]
     async function generateToken(s, unixTs) {
         var w = Math.floor(unixTs / WINDOW_SEC);
         var buf = new ArrayBuffer(8);
         var view = new DataView(buf);
         view.setUint32(0, Math.floor(w / 0x100000000), false);
         view.setUint32(4, w >>> 0, false);
-        var keyData = new TextEncoder().encode(s);
-        var key = await crypto.subtle.importKey('raw', keyData, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+        var key = await crypto.subtle.importKey(
+            'raw', new TextEncoder().encode(s),
+            { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+        );
         var sig = await crypto.subtle.sign('HMAC', key, buf);
-        return Array.from(new Uint8Array(sig)).map(function (b) { return b.toString(16).padStart(2, '0'); }).join('').substring(0, 12);
+        return Array.from(new Uint8Array(sig))
+            .map(function (b) { return b.toString(16).padStart(2, '0'); })
+            .join('').substring(0, 12);
     }
 
     async function refreshQR(s) {
-        var now = Math.floor(Date.now() / 1000);
-        var token = await generateToken(s, now);
-        var url = LIFF_BASE_URL + '?code=DL_' + token;
+        var token = await generateToken(s, Math.floor(Date.now() / 1000));
+        var liffId = window.APP_CONFIG && window.APP_CONFIG.liffId;
+        var url = 'https://liff.line.me/' + liffId + '?code=DL_' + token;
 
         if (qrInstance) {
             qrInstance.clear();
@@ -180,8 +408,8 @@
         } else {
             qrInstance = new QRCode(document.getElementById('qrcode'), {
                 text: url,
-                width: 240,
-                height: 240,
+                width: 220,
+                height: 220,
                 colorDark: '#111111',
                 colorLight: '#ffffff',
                 correctLevel: QRCode.CorrectLevel.M,
@@ -191,21 +419,14 @@
 
     function startTimer(s) {
         if (timerInterval) clearInterval(timerInterval);
-
         function tick() {
             var now = Math.floor(Date.now() / 1000);
             var remaining = WINDOW_SEC - (now % WINDOW_SEC);
-            var pct = (remaining / WINDOW_SEC) * 100;
-
             document.getElementById('countdown').textContent = remaining;
-            document.getElementById('timer-bar').style.width = pct + '%';
+            document.getElementById('timer-bar').style.width = (remaining / WINDOW_SEC * 100) + '%';
             document.getElementById('timer-bar').classList.toggle('expiring', remaining <= 8);
-
-            if (remaining === WINDOW_SEC) {
-                refreshQR(s);
-            }
+            if (remaining === WINDOW_SEC) refreshQR(s);
         }
-
         tick();
         timerInterval = setInterval(tick, 1000);
     }

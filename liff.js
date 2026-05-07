@@ -70,7 +70,11 @@ function showPoint(token) {
             if (data.data) {
                 $('#point-card-balance span').text(data.data.point);
                 $('#point-card-number span').text(data.data.number);
+                $('#point-card-name').text(data.data.name || '');
                 updateCardRank(data.data.rank, data.data.next_rank, data.data.next_rank_point);
+                if (data.data.is_new_member) {
+                    showWelcomeToast();
+                }
             } else {
                 $('#point').text('エラー');
             }
@@ -315,6 +319,14 @@ function useCouponMobile() {
 }
 
 // ── トースト ──────────────────────────────
+
+function showWelcomeToast() {
+    var $toast = $('#welcome-toast');
+    $toast.addClass('is-visible');
+    setTimeout(function () {
+        $toast.removeClass('is-visible');
+    }, 4200);
+}
 
 function showCouponToast(newCoupons) {
     var text = newCoupons.length === 1
