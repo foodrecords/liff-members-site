@@ -93,6 +93,19 @@
             color: #aaa;
         }
         .timer-row strong { color: #888; }
+        .refresh-btn {
+            background: none;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            padding: 2px 12px;
+            font-size: clamp(0.65rem, 1.2vw, 0.9rem);
+            color: #bbb;
+            cursor: pointer;
+            font-family: inherit;
+            margin-left: 8px;
+            transition: border-color 0.15s, color 0.15s;
+        }
+        .refresh-btn:active { border-color: #E83060; color: #E83060; }
 
         /* ── Bottom grid ── */
         .bottom-grid {
@@ -295,6 +308,7 @@
     <!-- Timer -->
     <div class="timer-row">
         次の更新: <strong id="next-update-time">--:--</strong>
+        <button class="refresh-btn" onclick="secret && refreshQR(secret)">今すぐ更新</button>
     </div>
 
     <!-- Bottom -->
