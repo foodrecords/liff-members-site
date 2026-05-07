@@ -310,7 +310,7 @@ function useCouponInStore() {
 
 function useCouponMobile() {
     if (!currentModalCoupon) return;
-    var url = 'https://food-records.square.site/?cc=' + encodeURIComponent(currentModalCoupon.code);
+    var url = currentModalCoupon.product_url || 'https://food-records.square.site/';
     if (liff.isInClient()) {
         liff.openWindow({ url: url, external: true });
     } else {
