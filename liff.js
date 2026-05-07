@@ -7,7 +7,7 @@ $(document).ready(function () {
     initializeLiff(window.APP_CONFIG.liffId);
 
     $('#modal-overlay, #modal-close-btn').on('click', closeCouponModal);
-    $('#modal-copy-btn').on('click', copyModalCode);
+    // $('#modal-copy-btn').on('click', copyModalCode);
     $('#modal-store-btn').on('click', useCouponInStore);
     $('#modal-mobile-btn').on('click', useCouponMobile);
 });
@@ -162,7 +162,17 @@ function renderCoupons(coupons) {
     }
 
     var now = new Date();
-    coupons.forEach(function (coupon) {
+
+    var sorted = coupons.slice().sort(function (a, b) {
+        var rank = function (c) {
+            if (c.used) return 2;
+            if (c.expires_at && new Date(c.expires_at) < now) return 1;
+            return 0;
+        };
+        return rank(a) - rank(b);
+    });
+
+    sorted.forEach(function (coupon) {
         couponDataMap[coupon.id] = coupon;
 
         var expired = coupon.expires_at && new Date(coupon.expires_at) < now;
@@ -184,8 +194,13 @@ function renderCoupons(coupons) {
             expiryHtml = '<span class="coupon-card-expiry' + (expired ? ' coupon-card-expiry--expired' : '') + '">期限 ' + dateStr + '</span>';
         }
 
+        var thumbHtml = coupon.image_url
+            ? '<div class="coupon-card-thumb"><img src="' + coupon.image_url + '" alt=""></div>'
+            : '';
+
         var html = '<div class="' + classes + '" data-id="' + coupon.id + '">' +
             badgeHtml +
+            thumbHtml +
             '<div class="coupon-card-body">' +
             '<p class="coupon-title">' + coupon.title + '</p>' +
             '<div class="coupon-card-meta">' +
@@ -231,8 +246,16 @@ function openCouponModal(coupon) {
     var expired = coupon.expires_at && new Date(coupon.expires_at) < now;
 
     $('#modal-title').text(coupon.title);
-    $('#modal-code').text(coupon.code);
-    $('#modal-copy-btn').text('コピー').removeClass('coupon-copy-btn--copied');
+
+    if (coupon.image_url) {
+        $('#modal-image').attr('src', coupon.image_url).show();
+    } else {
+        $('#modal-image').attr('src', '').hide();
+    }
+
+    // クーポンコード（ユーザーは使用しない仕様のためコメントアウト）
+    // $('#modal-code').text(coupon.code);
+    // $('#modal-copy-btn').text('コピー').removeClass('coupon-copy-btn--copied');
 
     if (coupon.description) {
         $('#modal-desc').html(nl2br($('<div>').text(coupon.description).html()));
@@ -312,7 +335,7 @@ function useCouponMobile() {
     if (!currentModalCoupon) return;
     var url = currentModalCoupon.product_url || 'https://food-records.square.site/';
     if (liff.isInClient()) {
-        liff.openWindow({ url: url, external: true });
+        liff.openWindow({ url: url, external: false });
     } else {
         window.open(url, '_blank');
     }

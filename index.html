@@ -15,14 +15,11 @@
 </head>
 
 <body>
-    <header>
-        <img id="header-logo" alt="FOOD RECORDS" src="foodrecords_logo.png">
-    </header>
-
     <main>
         <div class="membership-card" id="membership-card">
             <div class="card-top">
                 <span class="card-label">AGARUKE POINT CARD</span>
+                <img class="card-logo" src="foodrecords_logo.png" alt="FOOD RECORDS">
             </div>
             <div class="card-center">
                 <div class="card-point-area">
@@ -47,7 +44,7 @@
         </section>
 
         <section class="coupons-section">
-            <h2 class="section-title">クーポン</h2>
+            <h2 class="section-title">獲得済みのクーポン</h2>
             <div id="coupon-list">
                 <p class="coupon-empty">読み込み中...</p>
             </div>
@@ -85,6 +82,8 @@
                 <button class="coupon-modal-close" id="modal-close-btn">&times;</button>
             </div>
             <div class="coupon-modal-body">
+                <img id="modal-image" class="coupon-modal-image" src="" alt="" style="display:none;">
+                <!-- クーポンコード（ユーザーは使用しない仕様のためコメントアウト）
                 <div class="coupon-modal-code-block">
                     <p class="coupon-modal-label">クーポンコード</p>
                     <div class="coupon-modal-code-row">
@@ -92,6 +91,7 @@
                         <button id="modal-copy-btn" class="coupon-copy-btn">コピー</button>
                     </div>
                 </div>
+                -->
                 <div id="modal-desc-block" class="coupon-modal-desc-block">
                     <p class="coupon-modal-label">ご利用方法</p>
                     <p id="modal-desc" class="coupon-modal-desc"></p>
