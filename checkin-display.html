@@ -123,19 +123,18 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
-            font-size: clamp(2rem, 4vw, 3.5rem);
-            margin-bottom: 3px;
-        }
-        .food-or { font-size: clamp(0.78rem, 1.4vw, 1.1rem); font-weight: 700; color: #555; }
-        .food-labels {
-            display: flex;
-            justify-content: space-around;
-            font-size: clamp(0.64rem, 1.2vw, 0.95rem);
-            color: #333;
+            gap: 8px;
             margin-bottom: clamp(8px, 1.5vh, 16px);
-            padding: 0 2px;
         }
+        .food-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+        }
+        .food-emoji { font-size: clamp(2rem, 4vw, 3.5rem); line-height: 1; }
+        .food-label { font-size: clamp(0.64rem, 1.2vw, 0.95rem); color: #333; }
+        .food-or { font-size: clamp(0.78rem, 1.4vw, 1.1rem); font-weight: 700; color: #555; }
         .free-wrap { display: inline-block; position: relative; }
         .free-text {
             font-size: clamp(1.7rem, 5vw, 4rem);
@@ -155,7 +154,7 @@
         .rank-desc {
             font-size: clamp(0.82rem, 1.5vw, 1.2rem);
             line-height: 1.7;
-            text-align: left;
+            text-align: center;
             margin-bottom: clamp(10px, 1.8vh, 20px);
         }
         .rank-desc .pink  { color: #E83060; font-weight: 700; }
@@ -172,9 +171,15 @@
 
         .ranks {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
             gap: 2px;
+        }
+        .rank-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
         }
         .rank-circle {
             width: clamp(34px, 5vw, 56px);
@@ -190,17 +195,17 @@
         .rc-bronze { background: #C07830; }
         .rc-silver { background: #A8B0B8; }
         .rc-gold   { background: #D4A800; }
-        .rank-arrow { color: #888; font-size: clamp(0.9rem, 1.6vw, 1.4rem); font-weight: 700; margin: 0 1px; }
-
-        .rank-names {
-            display: flex;
-            justify-content: space-between;
+        .rank-name {
             font-size: clamp(0.6rem, 1.1vw, 0.9rem);
             color: #666;
-            margin-top: 5px;
-            padding: 0 1px;
         }
-        .rank-names span:nth-child(even) { flex: 1; }
+        /* 矢印をサークル中央に揃える */
+        .rank-arrow {
+            color: #888;
+            font-size: clamp(0.9rem, 1.6vw, 1.4rem);
+            font-weight: 700;
+            padding-top: clamp(9px, 1.8vw, 17px);
+        }
 
         /* ── Setup overlay ── */
         #setup-overlay {
@@ -299,13 +304,15 @@
         <div class="benefit-box">
             <span class="benefit-tag">次回来店時に</span>
             <div class="food-row">
-                <span>🥣</span>
+                <div class="food-item">
+                    <span class="food-emoji">🥣</span>
+                    <span class="food-label">トッピング</span>
+                </div>
                 <span class="food-or">or</span>
-                <span>🍚</span>
-            </div>
-            <div class="food-labels">
-                <span>トッピング</span>
-                <span>ライス大盛り</span>
+                <div class="food-item">
+                    <span class="food-emoji">🍚</span>
+                    <span class="food-label">ライス大盛り</span>
+                </div>
             </div>
             <div class="free-wrap">
                 <span class="free-text">無料！</span>
@@ -321,19 +328,25 @@
                 <span class="bold">特典が<span class="ul">アップグレード！</span></span>
             </div>
             <div class="ranks">
-                <div class="rank-circle rc-green">★</div>
+                <div class="rank-item">
+                    <div class="rank-circle rc-green">★</div>
+                    <span class="rank-name">Green</span>
+                </div>
                 <span class="rank-arrow">›</span>
-                <div class="rank-circle rc-bronze">★</div>
+                <div class="rank-item">
+                    <div class="rank-circle rc-bronze">★</div>
+                    <span class="rank-name">Bronze</span>
+                </div>
                 <span class="rank-arrow">›</span>
-                <div class="rank-circle rc-silver">★</div>
+                <div class="rank-item">
+                    <div class="rank-circle rc-silver">★</div>
+                    <span class="rank-name">Silver</span>
+                </div>
                 <span class="rank-arrow">›</span>
-                <div class="rank-circle rc-gold">★</div>
-            </div>
-            <div class="rank-names">
-                <span>Green</span><span></span>
-                <span>Bronze</span><span></span>
-                <span>Silver</span><span></span>
-                <span>Gold</span>
+                <div class="rank-item">
+                    <div class="rank-circle rc-gold">★</div>
+                    <span class="rank-name">Gold</span>
+                </div>
             </div>
         </div>
 
