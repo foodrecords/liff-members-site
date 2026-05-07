@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>チェックイン</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #111;
+            color: #fff;
+            font-family: 'Helvetica Neue', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+        }
+
+        #setup {
+            background: #222;
+            border-radius: 12px;
+            padding: 32px;
+            max-width: 360px;
+            width: 90%;
+        }
+
+        #setup h1 { font-size: 1.2rem; margin-bottom: 20px; color: #ccc; }
+
+        #secret-input {
+            width: 100%;
+            padding: 12px;
+            font-size: 1rem;
+            border-radius: 8px;
+            border: 1px solid #444;
+            background: #333;
+            color: #fff;
+            margin-bottom: 12px;
+        }
+
+        #start-btn {
+            width: 100%;
+            padding: 12px;
+            font-size: 1rem;
+            background: #25a244;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        #display { display: none; flex-direction: column; align-items: center; gap: 24px; padding: 32px 16px; }
+
+        .brand { font-size: 0.85rem; letter-spacing: 0.15em; color: #888; }
+
+        h1.title { font-size: 1.5rem; font-weight: 700; letter-spacing: 0.05em; }
+
+        #qrcode canvas, #qrcode img {
+            border-radius: 12px;
+            display: block;
+        }
+
+        .instructions {
+            font-size: 0.95rem;
+            color: #aaa;
+            line-height: 1.6;
+        }
+
+        #timer-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        #timer-bar-track {
+            width: 120px;
+            height: 4px;
+            background: #333;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        #timer-bar {
+            height: 100%;
+            background: #25a244;
+            border-radius: 2px;
+            transition: width 0.9s linear, background 0.5s;
+        }
+
+        #timer-bar.expiring { background: #e05; }
+
+        #countdown { min-width: 2.5em; text-align: right; }
+    </style>
+</head>
+<body>
+
+<!-- シークレット入力画面（URLハッシュがない場合のみ表示） -->
+<div id="setup">
+    <h1>シークレットを入力してください</h1>
+    <input id="secret-input" type="password" placeholder="CHECKIN_SECRET" autocomplete="off">
+    <button id="start-btn" onclick="startDisplay()">表示開始</button>
+</div>
+
+<!-- QRコード表示画面 -->
+<div id="display">
+    <p class="brand">FOOD RECORDS MEMBERS</p>
+    <h1 class="title">LINEでスキャン</h1>
+    <div id="qrcode"></div>
+    <p class="instructions">
+        LINEミニアプリを開き<br>「QRコードをスキャン」から読み取ってください
+    </p>
+    <div id="timer-wrap">
+        <div id="timer-bar-track"><div id="timer-bar"></div></div>
+        <span id="countdown">30</span>秒
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="config.js"></script>
+<script>
+    const WINDOW_SEC = 30;
+    const LIFF_BASE_URL = 'https://members.food-records.com';
+
+    var secret = null;
+    var qrInstance = null;
+    var timerInterval = null;
+
+    // URLハッシュからシークレットを取得
+    (function () {
+        var hash = window.location.hash.slice(1);
+        var params = new URLSearchParams(hash);
+        var s = params.get('secret');
+        if (s) {
+            secret = s;
+            document.getElementById('setup').style.display = 'none';
+            startDisplayWithSecret(secret);
+        }
+    })();
+
+    function startDisplay() {
+        var s = document.getElementById('secret-input').value.trim();
+        if (!s) { alert('シークレットを入力してください'); return; }
+        secret = s;
+        document.getElementById('setup').style.display = 'none';
+        startDisplayWithSecret(secret);
+    }
+
+    function startDisplayWithSecret(s) {
+        document.getElementById('display').style.display = 'flex';
+        refreshQR(s);
+        startTimer(s);
+    }
+
+    // Go の totp.Generate と同じアルゴリズム:
+    // HMAC-SHA256(secret, BigEndian uint64(floor(unixTs / 30)))[:12 hex chars]
+    async function generateToken(s, unixTs) {
+        var w = Math.floor(unixTs / WINDOW_SEC);
+        var buf = new ArrayBuffer(8);
+        var view = new DataView(buf);
+        view.setUint32(0, Math.floor(w / 0x100000000), false);
+        view.setUint32(4, w >>> 0, false);
+        var keyData = new TextEncoder().encode(s);
+        var key = await crypto.subtle.importKey('raw', keyData, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+        var sig = await crypto.subtle.sign('HMAC', key, buf);
+        return Array.from(new Uint8Array(sig)).map(function (b) { return b.toString(16).padStart(2, '0'); }).join('').substring(0, 12);
+    }
+
+    async function refreshQR(s) {
+        var now = Math.floor(Date.now() / 1000);
+        var token = await generateToken(s, now);
+        var url = LIFF_BASE_URL + '?code=DL_' + token;
+
+        if (qrInstance) {
+            qrInstance.clear();
+            qrInstance.makeCode(url);
+        } else {
+            qrInstance = new QRCode(document.getElementById('qrcode'), {
+                text: url,
+                width: 240,
+                height: 240,
+                colorDark: '#111111',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.M,
+            });
+        }
+    }
+
+    function startTimer(s) {
+        if (timerInterval) clearInterval(timerInterval);
+
+        function tick() {
+            var now = Math.floor(Date.now() / 1000);
+            var remaining = WINDOW_SEC - (now % WINDOW_SEC);
+            var pct = (remaining / WINDOW_SEC) * 100;
+
+            document.getElementById('countdown').textContent = remaining;
+            document.getElementById('timer-bar').style.width = pct + '%';
+            document.getElementById('timer-bar').classList.toggle('expiring', remaining <= 8);
+
+            if (remaining === WINDOW_SEC) {
+                refreshQR(s);
+            }
+        }
+
+        tick();
+        timerInterval = setInterval(tick, 1000);
+    }
+</script>
+</body>
+</html>
