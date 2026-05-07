@@ -6,46 +6,97 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
     <title>FOOD RECORDS メンバーズ</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/themes/base/jquery-ui.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@900&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="index.css">
 </head>
 
 <body>
     <header>
-        <div data-s-51a6c0e4-994c-4462-8fef-30712bdbedc8-inner="" class="sd appear">
-            <img id="header-logo" alt="" src="foodrecords_logo_pink.png">
-        </div>
+        <img id="header-logo" alt="FOOD RECORDS" src="foodrecords_logo.png">
     </header>
-    <div data-s-66e5ee07-e9fb-47f8-96c6-d2ee282a96e5="" class="sd appear">
-        <section class="card-main">
-            <div>
-                <div class="point-card">
-                    <p>あなたのポイント</p>
-                    <p id="point-card-balance"><span>0</span> point</p>
+
+    <main>
+        <div class="membership-card" id="membership-card">
+            <div class="card-top">
+                <span class="card-label">AGARUKE POINT CARD</span>
+            </div>
+            <div class="card-center">
+                <div class="card-point-area">
+                    <p class="point-label">現在のポイント</p>
+                    <p id="point-card-balance"><span>0</span><small>pt</small></p>
                     <p id="point-card-get"></p>
                 </div>
-                <p id="point-card-number">カード番号: <span></span></p>
-            </div>
-        </section>
-        
-        <section  class="sticky-button">
-            <div class="action-button">
-                <div id="scan-qr-code" onclick="scanQR()">
-                    QRコードを読み取る
+                <div class="card-rank-area">
+                    <p id="point-card-rank" class="card-rank-badge"></p>
+                    <p id="point-card-next" class="card-rank-next"></p>
                 </div>
             </div>
+            <p id="point-card-number">No. <span></span></p>
+        </div>
+
+        <section id="upcoming-section" class="upcoming-section" style="display:none">
+            <h2 class="section-title">次回の特典</h2>
+            <div id="upcoming-list"></div>
         </section>
+
+        <section class="coupons-section">
+            <h2 class="section-title">クーポン</h2>
+            <div id="coupon-list">
+                <p class="coupon-empty">読み込み中...</p>
+            </div>
+        </section>
+    </main>
+
+    <div class="sticky-button">
+        <button id="scan-qr-code" class="scan-button" onclick="scanQR()">
+            <i class="fa fa-qrcode"></i>
+            QRコードをスキャン
+        </button>
     </div>
+
+    <!-- クーポン獲得トースト -->
+    <div id="coupon-toast" class="coupon-toast">
+        <div class="coupon-toast-inner">
+            <p id="coupon-toast-text"></p>
+        </div>
+    </div>
+
+    <!-- クーポン詳細モーダル -->
+    <div id="coupon-modal" class="coupon-modal">
+        <div class="coupon-modal-overlay" id="modal-overlay"></div>
+        <div class="coupon-modal-sheet">
+            <div class="coupon-modal-handle"></div>
+            <div class="coupon-modal-header">
+                <h3 id="modal-title" class="coupon-modal-title"></h3>
+                <button class="coupon-modal-close" id="modal-close-btn">&times;</button>
+            </div>
+            <div class="coupon-modal-body">
+                <div class="coupon-modal-code-block">
+                    <p class="coupon-modal-label">クーポンコード</p>
+                    <div class="coupon-modal-code-row">
+                        <span id="modal-code" class="coupon-modal-code"></span>
+                        <button id="modal-copy-btn" class="coupon-copy-btn">コピー</button>
+                    </div>
+                </div>
+                <div id="modal-desc-block" class="coupon-modal-desc-block">
+                    <p class="coupon-modal-label">ご利用方法</p>
+                    <p id="modal-desc" class="coupon-modal-desc"></p>
+                </div>
+                <p id="modal-expiry" class="coupon-modal-expiry"></p>
+            </div>
+            <div class="coupon-modal-footer">
+                <p id="modal-used-note" class="coupon-modal-used-note"></p>
+                <button id="modal-store-btn" class="coupon-modal-store-btn">店舗で使用する</button>
+                <button id="modal-mobile-btn" class="coupon-modal-mobile-btn">モバイルオーダーで使用する</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
     <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script>
     <script src="https://unpkg.com/vconsole/dist/vconsole.min.js"></script>
     <script>new VConsole();</script>
