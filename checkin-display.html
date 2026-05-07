@@ -13,11 +13,12 @@
         body {
             background: #fff;
             font-family: 'Noto Sans JP', sans-serif;
-            min-height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px 16px;
+            padding: 10px 16px;
         }
 
         .poster {
@@ -29,7 +30,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            margin-bottom: 10px;
+            margin-bottom: 6px;
         }
         .h-line { flex: 1; height: 2px; background: #111; }
         .h-text  { font-size: 0.85rem; font-weight: 900; letter-spacing: 0.12em; white-space: nowrap; }
@@ -38,21 +39,21 @@
         .poster-heading {
             text-align: center;
             line-height: 1.1;
-            margin-bottom: 18px;
+            margin-bottom: 10px;
         }
-        .heading-pink  { display: block; font-size: clamp(2.6rem, 9.5vw, 3.4rem); font-weight: 900; color: #E83060; }
-        .heading-black { display: block; font-size: clamp(2.6rem, 9.5vw, 3.4rem); font-weight: 900; color: #111; }
+        .heading-pink  { display: block; font-size: clamp(2.2rem, 8vw, 2.8rem); font-weight: 900; color: #E83060; }
+        .heading-black { display: block; font-size: clamp(2.2rem, 8vw, 2.8rem); font-weight: 900; color: #111; }
 
         /* ── QR area ── */
         .qr-section {
             display: flex;
             justify-content: center;
-            margin-bottom: 10px;
+            margin-bottom: 4px;
         }
 
         .qr-outer {
             position: relative;
-            padding: 20px;
+            padding: 12px;
         }
 
         /* sparkle marks */
@@ -63,19 +64,19 @@
             background: #E83060;
             transform-origin: center;
         }
-        .sp1 { height: 20px; top:  4px; left: 14px; transform: rotate(-48deg); }
-        .sp2 { height: 13px; top: 11px; left:  4px; transform: rotate(-72deg); }
-        .sp3 { height: 20px; top:  4px; right: 14px; transform: rotate(48deg); }
-        .sp4 { height: 13px; top: 11px; right:  4px; transform: rotate(72deg); }
-        .sp5 { height: 18px; bottom: 8px; left: 10px; transform: rotate(32deg); }
-        .sp6 { height: 13px; bottom: 4px; left: 22px; transform: rotate(58deg); }
-        .sp7 { height: 18px; bottom: 8px; right: 10px; transform: rotate(-32deg); }
-        .sp8 { height: 13px; bottom: 4px; right: 22px; transform: rotate(-58deg); }
+        .sp1 { height: 16px; top:  2px; left: 10px; transform: rotate(-48deg); }
+        .sp2 { height: 10px; top:  7px; left:  2px; transform: rotate(-72deg); }
+        .sp3 { height: 16px; top:  2px; right: 10px; transform: rotate(48deg); }
+        .sp4 { height: 10px; top:  7px; right:  2px; transform: rotate(72deg); }
+        .sp5 { height: 14px; bottom: 4px; left:  6px; transform: rotate(32deg); }
+        .sp6 { height: 10px; bottom: 1px; left: 16px; transform: rotate(58deg); }
+        .sp7 { height: 14px; bottom: 4px; right:  6px; transform: rotate(-32deg); }
+        .sp8 { height: 10px; bottom: 1px; right: 16px; transform: rotate(-58deg); }
 
         .qr-frame {
             border: 3px solid #E83060;
             border-radius: 16px;
-            padding: 14px;
+            padding: 10px;
             background: #fff;
         }
 
@@ -86,25 +87,18 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            margin-bottom: 18px;
+            gap: 4px;
+            margin-bottom: 10px;
             font-size: 0.75rem;
             color: #aaa;
         }
-        .timer-track { width: 100px; height: 3px; background: #eee; border-radius: 2px; overflow: hidden; }
-        #timer-bar {
-            height: 100%;
-            background: #E83060;
-            border-radius: 2px;
-            transition: width 0.9s linear, background 0.5s;
-        }
-        #timer-bar.expiring { background: #ff3030; }
+        .timer-row strong { color: #888; }
 
         /* ── Bottom grid ── */
         .bottom-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            gap: 8px;
             align-items: start;
         }
 
@@ -112,7 +106,7 @@
         .benefit-box {
             background: #FFF0F4;
             border-radius: 14px;
-            padding: 14px 10px 16px;
+            padding: 10px 10px 12px;
             text-align: center;
         }
         .benefit-tag {
@@ -294,8 +288,7 @@
 
     <!-- Timer -->
     <div class="timer-row">
-        <div class="timer-track"><div id="timer-bar"></div></div>
-        <span id="countdown">30</span>秒で更新
+        次の更新: <strong id="next-update-time">--:--</strong>
     </div>
 
     <!-- Bottom -->
@@ -349,7 +342,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="config.js"></script>
 <script>
-    const WINDOW_SEC = 30;
+    // 3:00/9:00/15:00/21:00 JST (= UTC 0/6/12/18h) に更新する 6 時間ウィンドウ
+    const WINDOW_SEC = 6 * 60 * 60;
 
     var secret = null;
     var qrInstance = null;
@@ -408,8 +402,8 @@
         } else {
             qrInstance = new QRCode(document.getElementById('qrcode'), {
                 text: url,
-                width: 220,
-                height: 220,
+                width: 200,
+                height: 200,
                 colorDark: '#111111',
                 colorLight: '#ffffff',
                 correctLevel: QRCode.CorrectLevel.M,
@@ -417,18 +411,29 @@
         }
     }
 
+    function getNextUpdateTimeJST() {
+        var nowSec = Math.floor(Date.now() / 1000);
+        var nextSec = (Math.floor(nowSec / WINDOW_SEC) + 1) * WINDOW_SEC;
+        var d = new Date(nextSec * 1000);
+        var h = (d.getUTCHours() + 9) % 24;
+        var m = d.getUTCMinutes().toString().padStart(2, '0');
+        return h + ':' + m;
+    }
+
     function startTimer(s) {
         if (timerInterval) clearInterval(timerInterval);
+        var currentWindow = Math.floor(Date.now() / 1000 / WINDOW_SEC);
+
         function tick() {
-            var now = Math.floor(Date.now() / 1000);
-            var remaining = WINDOW_SEC - (now % WINDOW_SEC);
-            document.getElementById('countdown').textContent = remaining;
-            document.getElementById('timer-bar').style.width = (remaining / WINDOW_SEC * 100) + '%';
-            document.getElementById('timer-bar').classList.toggle('expiring', remaining <= 8);
-            if (remaining === WINDOW_SEC) refreshQR(s);
+            document.getElementById('next-update-time').textContent = getNextUpdateTimeJST();
+            var w = Math.floor(Date.now() / 1000 / WINDOW_SEC);
+            if (w !== currentWindow) {
+                currentWindow = w;
+                refreshQR(s);
+            }
         }
         tick();
-        timerInterval = setInterval(tick, 1000);
+        timerInterval = setInterval(tick, 60000); // 1分ごとに確認
     }
 </script>
 </body>
