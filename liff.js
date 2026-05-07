@@ -107,12 +107,13 @@ function checkCode(token, code) {
                 updateCardRank(data.data.rank, data.data.next_rank, data.data.next_rank_point);
                 if (data.data.get_point) {
                     $('#point-card-get').text(data.data.get_point + ' point get!').css('visibility', 'visible');
+                    showPointToast(data.data.get_point);
                 }
                 if (data.data.new_coupons && data.data.new_coupons.length > 0) {
                     data.data.new_coupons.forEach(function (c) {
                         newlyAcquiredIds[c.id] = true;
                     });
-                    showCouponToast(data.data.new_coupons);
+                    setTimeout(function () { showCouponToast(data.data.new_coupons); }, 2800);
                 }
                 showCoupons(token);
             } else {
@@ -342,6 +343,15 @@ function useCouponMobile() {
 }
 
 // ── トースト ──────────────────────────────
+
+function showPointToast(point) {
+    $('#point-toast-text').text('+' + point + ' ポイント獲得！');
+    var $toast = $('#point-toast');
+    $toast.addClass('is-visible');
+    setTimeout(function () {
+        $toast.removeClass('is-visible');
+    }, 2400);
+}
 
 function showWelcomeToast() {
     var $toast = $('#welcome-toast');
