@@ -56,6 +56,12 @@ function scanQR() {
         });
 }
 
+function hideLoader() {
+    var $overlay = $('#loading-overlay');
+    $overlay.addClass('is-hidden');
+    setTimeout(function () { $overlay.remove(); }, 450);
+}
+
 function showPoint(token) {
     var apiurl = window.APP_CONFIG.apiUrl;
     console.log('[API] GET ' + apiurl + '/members');
@@ -67,6 +73,7 @@ function showPoint(token) {
         url: apiurl + '/members',
         success: function (data) {
             console.log('[API] /members response:', JSON.stringify(data));
+            hideLoader();
             if (data.data) {
                 $('#point-card-balance span').text(data.data.point);
                 $('#point-card-number span').text(data.data.number);
@@ -80,6 +87,7 @@ function showPoint(token) {
             }
         },
         error: function (jqXHR) {
+            hideLoader();
             var msg = jqXHR.responseJSON && jqXHR.responseJSON.message || jqXHR.statusText || 'network error (status=' + jqXHR.status + ')';
             console.error('[API] /members error:', jqXHR.status, msg);
             alert(msg);

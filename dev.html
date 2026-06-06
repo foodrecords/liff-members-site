@@ -137,6 +137,12 @@
 
 <body>
 
+    <!-- ── Loading overlay ── -->
+    <div id="loading-overlay" class="loading-overlay">
+        <img class="loading-logo" src="foodrecords_logo.png" alt="FOOD RECORDS">
+        <div class="loading-spinner"></div>
+    </div>
+
     <!-- ── Dev Login overlay ── -->
     <div id="dev-login-overlay" class="dev-login-overlay is-open">
         <div class="dev-login-card">
@@ -327,12 +333,19 @@
     }
 
     // ── API calls (same as liff.js but no LIFF) ─────
+    function hideLoader() {
+        var $overlay = $('#loading-overlay');
+        $overlay.addClass('is-hidden');
+        setTimeout(function () { $overlay.remove(); }, 450);
+    }
+
     function showPoint(token) {
         $.ajax({
             beforeSend: function (req) { req.setRequestHeader('Authorization', 'Bearer ' + token); },
             dataType: 'json',
             url: DEV_API + '/members',
             success: function (data) {
+                hideLoader();
                 if (data.data) {
                     $('#point-card-balance span').text(data.data.point);
                     $('#point-card-number span').text(data.data.number);
@@ -342,6 +355,7 @@
                 }
             },
             error: function (jqXHR) {
+                hideLoader();
                 var msg = jqXHR.responseJSON && jqXHR.responseJSON.message || 'network error';
                 alert('/members error: ' + msg);
             }
