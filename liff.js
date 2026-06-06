@@ -1,5 +1,6 @@
 var newlyAcquiredIds = {};
 var couponDataMap = {};
+var upcomingDataMap = {};
 var currentModalCoupon = null;
 var _couponToken = null;
 
@@ -300,6 +301,35 @@ function openCouponModal(coupon) {
     $('body').addClass('modal-open');
 }
 
+function openUpcomingModal(item) {
+    $('#modal-title').text(item.title);
+
+    if (item.image_url) {
+        $('#modal-image').attr('src', item.image_url).show();
+    } else {
+        $('#modal-image').attr('src', '').hide();
+    }
+
+    if (item.description) {
+        $('#modal-desc').html(nl2br($('<div>').text(item.description).html()));
+        $('#modal-desc-block').show();
+    } else {
+        $('#modal-desc-block').hide();
+    }
+
+    $('#modal-expiry').hide();
+
+    var noteText = item.points_needed > 0
+        ? 'あと ' + item.points_needed + ' pt で獲得できます'
+        : '獲得条件を達成しています';
+    $('#modal-used-note').text(noteText).show();
+    $('#modal-store-btn').hide();
+    $('#modal-mobile-btn').hide();
+
+    $('#coupon-modal').addClass('is-open');
+    $('body').addClass('modal-open');
+}
+
 function closeCouponModal() {
     $('#coupon-modal').removeClass('is-open');
     $('body').removeClass('modal-open');
@@ -411,6 +441,7 @@ function switchTab(tab) {
 // ── 次回の特典 ────────────────────────────
 
 function renderUpcoming(upcoming) {
+    upcomingDataMap = {};
     var $list = $('#upcoming-list');
     $list.empty();
 
@@ -418,6 +449,8 @@ function renderUpcoming(upcoming) {
         $list.append('<p class="coupon-empty">次回の特典はありません</p>');
         return;
     }
+
+    upcoming.forEach(function (item) { upcomingDataMap[item.id] = item; });
 
     // 最初の非ランクゴール → NEXT として表示（なければ何も表示しない）
     var firstNonGoal = null;
@@ -436,14 +469,28 @@ function renderUpcoming(upcoming) {
     if (firstGoal && firstGoal !== firstNonGoal) {
         $list.append(buildUpcomingCard(firstGoal, 'RANK GOAL'));
     }
+
+    $list.off('click', '.upcoming-card').on('click', '.upcoming-card', function () {
+        var id = $(this).data('id');
+        if (upcomingDataMap[id]) openUpcomingModal(upcomingDataMap[id]);
+    });
 }
 
 function buildUpcomingCard(item, label) {
     var isGoal = label === 'RANK GOAL';
     var discountStr = item.discount_label
         || (item.discount_amount > 0 ? '¥' + item.discount_amount.toLocaleString() + ' OFF' : '');
-    return '<div class="upcoming-card' + (isGoal ? ' upcoming-card--goal' : '') + '">' +
+    var thumbHtml = item.image_url
+        ? '<div class="upcoming-card-thumb">' +
+          '<img src="' + item.image_url + '" alt="">' +
+          '<div class="upcoming-card-thumb-lock"><i class="fa fa-lock"></i></div>' +
+          '</div>'
+        : '';
+    return '<div class="upcoming-card' + (isGoal ? ' upcoming-card--goal' : '') + '" data-id="' + item.id + '">' +
         '<div class="upcoming-card-label">' + label + '</div>' +
+        '<div class="upcoming-card-content">' +
+        thumbHtml +
+        '<div class="upcoming-card-body">' +
         '<div class="upcoming-card-top">' +
         '<p class="upcoming-title">' + item.title + '</p>' +
         (discountStr ? '<span class="upcoming-discount">' + discountStr + '</span>' : '') +
@@ -453,6 +500,9 @@ function buildUpcomingCard(item, label) {
         '<span class="upcoming-points-needed">あと <strong>' + item.points_needed + '</strong> pt</span>' +
         '</div>' +
         '<div class="upcoming-progress-track"><div class="upcoming-progress-fill" style="width:' + item.progress_percent + '%"></div></div>' +
+        '</div>' +
+        '<span class="upcoming-card-arrow">&#8250;</span>' +
+        '</div>' +
         '</div>';
 }
 

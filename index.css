@@ -419,6 +419,57 @@ main {
     padding: 14px 16px;
     margin-bottom: 10px;
     border-left: 4px dashed #e87272;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: box-shadow 0.15s ease;
+}
+
+.upcoming-card:active {
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.upcoming-card-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.upcoming-card-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.upcoming-card-thumb {
+    width: 52px;
+    height: 52px;
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.upcoming-card-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: blur(1.5px) brightness(0.65);
+}
+
+.upcoming-card-thumb-lock {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 15px;
+}
+
+.upcoming-card-arrow {
+    font-size: 20px;
+    color: #ddd;
+    flex-shrink: 0;
+    line-height: 1;
 }
 
 .upcoming-card--goal {
