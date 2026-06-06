@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>[DEV] AGARUKE POINT CARD</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+    <style>
+        /* ── Dev Login overlay ── */
+        .dev-login-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .dev-login-overlay.is-open { display: flex; }
+        .dev-login-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 32px 24px;
+            width: 88%;
+            max-width: 360px;
+            text-align: center;
+        }
+        .dev-login-card h2 {
+            font-size: 18px;
+            font-weight: 700;
+            margin: 0 0 6px;
+            color: #333;
+        }
+        .dev-login-card p {
+            font-size: 13px;
+            color: #666;
+            margin: 0 0 20px;
+        }
+        .dev-login-card input[type=text] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1.5px solid #ccc;
+            border-radius: 8px;
+            font-size: 15px;
+            box-sizing: border-box;
+            margin-bottom: 12px;
+        }
+        .dev-login-card button {
+            width: 100%;
+            padding: 12px;
+            background: #06c755;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .dev-login-error {
+            color: #e00;
+            font-size: 13px;
+            margin-top: 8px;
+            min-height: 18px;
+        }
+        /* ── Dev toolbar (bottom bar above scan button) ── */
+        .dev-toolbar {
+            position: fixed;
+            bottom: 80px;
+            left: 0;
+            right: 0;
+            background: #1a1a2e;
+            color: #ccc;
+            font-size: 12px;
+            z-index: 100;
+            padding: 8px 12px;
+        }
+        .dev-toolbar-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .dev-toolbar-row + .dev-toolbar-row {
+            margin-top: 6px;
+        }
+        .dev-toolbar label {
+            color: #aaa;
+            white-space: nowrap;
+        }
+        .dev-toolbar input[type=text] {
+            flex: 1;
+            min-width: 0;
+            padding: 5px 8px;
+            border-radius: 6px;
+            border: none;
+            font-size: 13px;
+            background: #2e2e4e;
+            color: #fff;
+        }
+        .dev-toolbar button {
+            padding: 5px 10px;
+            border-radius: 6px;
+            border: none;
+            background: #4caf50;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .dev-toolbar button.danger { background: #e53935; }
+        .dev-toolbar button.secondary { background: #555; }
+        .dev-toolbar-uid {
+            font-family: monospace;
+            font-size: 12px;
+            color: #7ec8e3;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 180px;
+        }
+        .dev-serial-hint {
+            font-size: 11px;
+            color: #888;
+            margin-top: 2px;
+        }
+        /* adjust main content so dev toolbar doesn't cover it */
+        main { padding-bottom: 130px; }
+    </style>
+</head>
+
+<body>
+
+    <!-- ── Dev Login overlay ── -->
+    <div id="dev-login-overlay" class="dev-login-overlay is-open">
+        <div class="dev-login-card">
+            <h2>DEV ログイン</h2>
+            <p>テスト用ユーザーIDを入力してください<br>（任意の文字列 → そのままLINE UIDとして使用）</p>
+            <input type="text" id="dev-uid-input" placeholder="例: test-user-001" autocomplete="off">
+            <button onclick="devLogin()">このIDで開始</button>
+            <div id="dev-login-error" class="dev-login-error"></div>
+        </div>
+    </div>
+
+    <!-- ── Main app ── -->
+    <main>
+        <div class="membership-card" id="membership-card">
+            <div class="card-top">
+                <span class="card-label">AGARUKE POINT CARD</span>
+                <img class="card-logo" src="foodrecords_logo.png" alt="FOOD RECORDS">
+            </div>
+            <div class="card-center">
+                <div class="card-point-area">
+                    <p class="point-label">現在のポイント</p>
+                    <p id="point-card-balance"><span>0</span><small>pt</small></p>
+                    <p id="point-card-get"></p>
+                </div>
+                <div class="card-rank-area">
+                    <p id="point-card-rank" class="card-rank-badge"></p>
+                    <p id="point-card-next" class="card-rank-next"></p>
+                </div>
+            </div>
+            <div class="card-footer">
+                <p id="point-card-name"></p>
+                <p id="point-card-number">No. <span></span></p>
+            </div>
+        </div>
+
+        <div class="coupon-tabs" id="coupon-tabs">
+            <div class="coupon-tab-header">
+                <button class="coupon-tab-btn is-active" id="tab-upcoming" onclick="switchTab('upcoming')">次回の特典</button>
+                <button class="coupon-tab-btn" id="tab-acquired" onclick="switchTab('acquired')">獲得済みの特典</button>
+            </div>
+            <div id="tab-panel-upcoming">
+                <div id="upcoming-list"></div>
+            </div>
+            <div id="tab-panel-acquired" style="display:none">
+                <div id="coupon-list">
+                    <p class="coupon-empty">読み込み中...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ── Dev toolbar ── -->
+    <div class="dev-toolbar">
+        <div class="dev-toolbar-row">
+            <label>USER:</label>
+            <span class="dev-toolbar-uid" id="dev-current-uid"></span>
+            <button class="secondary" onclick="devLogout()">切替</button>
+        </div>
+        <div class="dev-toolbar-row">
+            <label>CODE:</label>
+            <input type="text" id="dev-code-input" placeholder="FRTEST0001 / DL_TEST">
+            <button onclick="devScanCode()">スキャン</button>
+        </div>
+        <div class="dev-serial-hint">テスト用: FRTEST0001(3pt) FRTEST0002(5pt) FRTEST0003(10pt) | DL_TEST(毎日1pt)</div>
+    </div>
+
+    <!-- ── Scan button (prod UI) ── -->
+    <div class="sticky-button">
+        <button id="scan-qr-code" class="scan-button" onclick="focusCodeInput()">
+            <i class="fa fa-qrcode"></i>
+            QRコードをスキャン
+        </button>
+    </div>
+
+    <!-- ポイント獲得トースト -->
+    <div id="point-toast" class="point-toast">
+        <div class="point-toast-inner">
+            <p id="point-toast-text"></p>
+        </div>
+    </div>
+
+    <!-- 初回登録トースト -->
+    <div id="welcome-toast" class="welcome-toast">
+        <div class="welcome-toast-inner">
+            <p>ポイントカードへようこそ！ボーナス1ptをプレゼント🎉</p>
+        </div>
+    </div>
+
+    <!-- クーポン獲得トースト -->
+    <div id="coupon-toast" class="coupon-toast">
+        <div class="coupon-toast-inner">
+            <p id="coupon-toast-text"></p>
+        </div>
+    </div>
+
+    <!-- クーポン詳細モーダル -->
+    <div id="coupon-modal" class="coupon-modal">
+        <div class="coupon-modal-overlay" id="modal-overlay"></div>
+        <div class="coupon-modal-sheet">
+            <div class="coupon-modal-handle"></div>
+            <div class="coupon-modal-header">
+                <h3 id="modal-title" class="coupon-modal-title"></h3>
+                <button class="coupon-modal-close" id="modal-close-btn">&times;</button>
+            </div>
+            <div class="coupon-modal-body">
+                <img id="modal-image" class="coupon-modal-image" src="" alt="" style="display:none;">
+                <div id="modal-desc-block" class="coupon-modal-desc-block">
+                    <p class="coupon-modal-label">ご利用方法</p>
+                    <p id="modal-desc" class="coupon-modal-desc"></p>
+                </div>
+                <p id="modal-expiry" class="coupon-modal-expiry"></p>
+            </div>
+            <div class="coupon-modal-footer">
+                <p id="modal-used-note" class="coupon-modal-used-note"></p>
+                <button id="modal-store-btn" class="coupon-modal-store-btn">店舗で使用する</button>
+                <button id="modal-mobile-btn" class="coupon-modal-mobile-btn">モバイルオーダーで使用する</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script>
+    // ── Dev config ──────────────────────────────────
+    var DEV_API = window.location.protocol + '//' + window.location.hostname + ':8081';
+    var DEV_UID_KEY = 'dev_user_id';
+
+    var newlyAcquiredIds = {};
+    var couponDataMap = {};
+    var currentModalCoupon = null;
+    var currentToken = null;
+
+    // ── Init ────────────────────────────────────────
+    $(document).ready(function () {
+        var uid = localStorage.getItem(DEV_UID_KEY);
+        if (uid) {
+            devStart(uid);
+        }
+        $('#dev-uid-input').on('keypress', function (e) {
+            if (e.which === 13) devLogin();
+        });
+        $('#dev-code-input').on('keypress', function (e) {
+            if (e.which === 13) devScanCode();
+        });
+        $('#modal-overlay, #modal-close-btn').on('click', closeCouponModal);
+        $('#modal-store-btn').on('click', useCouponInStore);
+        $('#modal-mobile-btn').on('click', useCouponMobile);
+    });
+
+    function devLogin() {
+        var uid = $('#dev-uid-input').val().trim();
+        if (!uid) {
+            $('#dev-login-error').text('ユーザーIDを入力してください');
+            return;
+        }
+        localStorage.setItem(DEV_UID_KEY, uid);
+        devStart(uid);
+    }
+
+    function devStart(uid) {
+        currentToken = uid;
+        $('#dev-current-uid').text(uid);
+        $('#dev-login-overlay').removeClass('is-open');
+
+        var code = getParam('code');
+        showPoint(uid);
+        showCoupons(uid);
+        if (code) checkCode(uid, code);
+    }
+
+    function devLogout() {
+        localStorage.removeItem(DEV_UID_KEY);
+        currentToken = null;
+        $('#dev-uid-input').val('');
+        $('#dev-login-error').text('');
+        $('#dev-login-overlay').addClass('is-open');
+    }
+
+    function focusCodeInput() {
+        $('#dev-code-input').focus();
+    }
+
+    function devScanCode() {
+        var code = $('#dev-code-input').val().trim();
+        if (!code) { alert('コードを入力してください'); return; }
+        if (!currentToken) { devLogout(); return; }
+        checkCode(currentToken, code);
+        $('#dev-code-input').val('');
+    }
+
+    // ── API calls (same as liff.js but no LIFF) ─────
+    function showPoint(token) {
+        $.ajax({
+            beforeSend: function (req) { req.setRequestHeader('Authorization', 'Bearer ' + token); },
+            dataType: 'json',
+            url: DEV_API + '/members',
+            success: function (data) {
+                if (data.data) {
+                    $('#point-card-balance span').text(data.data.point);
+                    $('#point-card-number span').text(data.data.number);
+                    $('#point-card-name').text(data.data.name || '');
+                    updateCardRank(data.data.rank, data.data.next_rank, data.data.next_rank_point);
+                    if (data.data.is_new_member) showWelcomeToast();
+                }
+            },
+            error: function (jqXHR) {
+                var msg = jqXHR.responseJSON && jqXHR.responseJSON.message || 'network error';
+                alert('/members error: ' + msg);
+            }
+        });
+    }
+
+    function checkCode(token, code) {
+        currentToken = token;
+        $.ajax({
+            beforeSend: function (req) { req.setRequestHeader('Authorization', 'Bearer ' + token); },
+            dataType: 'json',
+            url: DEV_API + '/qrcode',
+            type: 'post',
+            data: JSON.stringify({ code: code }),
+            contentType: 'application/json',
+            success: function (data) {
+                if (data.data) {
+                    $('#point-card-balance span').text(data.data.point);
+                    $('#point-card-number span').text(data.data.number);
+                    updateCardRank(data.data.rank, data.data.next_rank, data.data.next_rank_point);
+                    if (data.data.get_point) {
+                        $('#point-card-get').text(data.data.get_point + ' point get!').css('visibility', 'visible');
+                        showPointToast(data.data.get_point);
+                    }
+                    if (data.data.new_coupons && data.data.new_coupons.length > 0) {
+                        data.data.new_coupons.forEach(function (c) { newlyAcquiredIds[c.id] = true; });
+                        setTimeout(function () { showCouponToast(data.data.new_coupons); }, 2800);
+                    }
+                    showCoupons(token);
+                }
+            },
+            error: function (jqXHR) {
+                var msg = jqXHR.responseJSON && jqXHR.responseJSON.message || 'network error';
+                alert(msg);
+            }
+        });
+    }
+
+    function showCoupons(token) {
+        if (token) currentToken = token;
+        $.ajax({
+            beforeSend: function (req) { req.setRequestHeader('Authorization', 'Bearer ' + currentToken); },
+            dataType: 'json',
+            url: DEV_API + '/coupons',
+            success: function (data) {
+                if (data.data) {
+                    renderCoupons(data.data.coupons);
+                    renderUpcoming(data.data.upcoming);
+                }
+            },
+            error: function () {
+                $('#coupon-list').html('<p class="coupon-empty">クーポンの取得に失敗しました</p>');
+            }
+        });
+    }
+
+    // ── 以下は liff.js と同一ロジック ──────────────
+
+    function renderCoupons(coupons) {
+        couponDataMap = {};
+        var $list = $('#coupon-list');
+        $list.empty();
+        if (!coupons || coupons.length === 0) {
+            $list.append('<p class="coupon-empty">クーポンはありません</p>');
+            return;
+        }
+        var now = new Date();
+        var sorted = coupons.slice().sort(function (a, b) {
+            var rank = function (c) { return c.used ? 2 : (c.expires_at && new Date(c.expires_at) < now ? 1 : 0); };
+            return rank(a) - rank(b);
+        });
+        sorted.forEach(function (coupon) {
+            couponDataMap[coupon.id] = coupon;
+            var expired = coupon.expires_at && new Date(coupon.expires_at) < now;
+            var isNew = !!newlyAcquiredIds[coupon.id];
+            var classes = 'coupon-card' + (coupon.used ? ' coupon-card--used' : (expired ? ' coupon-card--expired' : '')) + (isNew ? ' coupon-card--new' : '');
+            var badgeHtml = coupon.used ? '<span class="coupon-badge coupon-badge--used">使用済み</span>' : (isNew ? '<span class="coupon-badge coupon-badge--new">NEW</span>' : '');
+            var expiryHtml = '';
+            if (coupon.expires_at) {
+                var d = new Date(coupon.expires_at);
+                var ds = d.getFullYear() + '/' + (d.getMonth() + 1) + '/' + d.getDate();
+                expiryHtml = '<span class="coupon-card-expiry' + (expired ? ' coupon-card-expiry--expired' : '') + '">期限 ' + ds + '</span>';
+            }
+            var thumbHtml = coupon.image_url ? '<div class="coupon-card-thumb"><img src="' + coupon.image_url + '" alt=""></div>' : '';
+            $list.append(
+                '<div class="' + classes + '" data-id="' + coupon.id + '">' +
+                badgeHtml + thumbHtml +
+                '<div class="coupon-card-body"><p class="coupon-title">' + coupon.title + '</p>' +
+                '<div class="coupon-card-meta">' + discountHtml(coupon) + expiryHtml + '</div></div>' +
+                '<span class="coupon-card-arrow">&#8250;</span></div>'
+            );
+        });
+        $list.off('click', '.coupon-card').on('click', '.coupon-card', function () {
+            var id = $(this).data('id');
+            if (couponDataMap[id]) openCouponModal(couponDataMap[id]);
+        });
+    }
+
+    var RANK_LABELS = { green: 'GREEN', bronze: 'BRONZE', silver: 'SILVER', gold: 'GOLD' };
+
+    function updateCardRank(rank, nextRank, nextRankPoint) {
+        var $card = $('#membership-card');
+        $card.removeClass('membership-card--green membership-card--bronze membership-card--silver membership-card--gold');
+        if (rank) $card.addClass('membership-card--' + rank);
+        $('#point-card-rank').text(RANK_LABELS[rank] || '');
+        if (nextRank && nextRankPoint > 0) {
+            $('#point-card-next').html((RANK_LABELS[nextRank] || nextRank.toUpperCase()) + 'まで<br>あと ' + nextRankPoint + 'pt');
+        } else {
+            $('#point-card-next').html('最高ランク<br>達成');
+        }
+    }
+
+    function openCouponModal(coupon) {
+        currentModalCoupon = coupon;
+        var now = new Date();
+        var expired = coupon.expires_at && new Date(coupon.expires_at) < now;
+        $('#modal-title').text(coupon.title);
+        if (coupon.image_url) { $('#modal-image').attr('src', coupon.image_url).show(); } else { $('#modal-image').attr('src', '').hide(); }
+        if (coupon.description) {
+            $('#modal-desc').html(nl2br($('<div>').text(coupon.description).html()));
+            $('#modal-desc-block').show();
+        } else { $('#modal-desc-block').hide(); }
+        if (coupon.expires_at) {
+            var d = new Date(coupon.expires_at);
+            $('#modal-expiry').text((expired ? '（期限切れ）' : '期限: ') + d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日').show();
+        } else { $('#modal-expiry').hide(); }
+        if (coupon.used) {
+            var label = '使用済み';
+            if (coupon.used_at) { var ud = new Date(coupon.used_at); label += '（' + ud.getFullYear() + '/' + (ud.getMonth() + 1) + '/' + ud.getDate() + '）'; }
+            $('#modal-used-note').text(label).show();
+            $('#modal-store-btn, #modal-mobile-btn').hide();
+        } else {
+            $('#modal-used-note').hide();
+            $('#modal-store-btn').show().prop('disabled', false).text('店舗で使用する');
+            $('#modal-mobile-btn').show();
+        }
+        $('#coupon-modal').addClass('is-open');
+        $('body').addClass('modal-open');
+    }
+
+    function closeCouponModal() {
+        $('#coupon-modal').removeClass('is-open');
+        $('body').removeClass('modal-open');
+    }
+
+    function useCouponInStore() {
+        if (!currentModalCoupon || currentModalCoupon.used) return;
+        if (!confirm('スタッフにこの画面をご確認いただいてから「OK」を押してください。\n使用済みにすると元に戻せません。')) return;
+        $('#modal-store-btn').prop('disabled', true).text('処理中...');
+        $.ajax({
+            beforeSend: function (req) { req.setRequestHeader('Authorization', 'Bearer ' + currentToken); },
+            dataType: 'json',
+            url: DEV_API + '/coupons/' + currentModalCoupon.id + '/use',
+            type: 'post',
+            success: function () { closeCouponModal(); showCoupons(); },
+            error: function (jqXHR) {
+                var msg = jqXHR.responseJSON && jqXHR.responseJSON.message || 'エラーが発生しました';
+                alert(msg);
+                $('#modal-store-btn').prop('disabled', false).text('店舗で使用する');
+            }
+        });
+    }
+
+    function useCouponMobile() {
+        if (!currentModalCoupon) return;
+        var url = currentModalCoupon.product_url || 'https://food-records.square.site/';
+        window.open(url, '_blank');
+    }
+
+    function switchTab(tab) {
+        if (tab === 'upcoming') {
+            $('#tab-upcoming').addClass('is-active');
+            $('#tab-acquired').removeClass('is-active');
+            $('#tab-panel-upcoming').show();
+            $('#tab-panel-acquired').hide();
+        } else {
+            $('#tab-acquired').addClass('is-active');
+            $('#tab-upcoming').removeClass('is-active');
+            $('#tab-panel-acquired').show();
+            $('#tab-panel-upcoming').hide();
+        }
+    }
+
+    function renderUpcoming(upcoming) {
+        var $list = $('#upcoming-list');
+        $list.empty();
+        if (!upcoming || upcoming.length === 0) {
+            $list.append('<p class="coupon-empty">次回の特典はありません</p>');
+            return;
+        }
+        var firstNonGoal = null, firstGoal = null;
+        for (var i = 0; i < upcoming.length; i++) {
+            if (!upcoming[i].is_rank_goal && !firstNonGoal) firstNonGoal = upcoming[i];
+            if (upcoming[i].is_rank_goal && !firstGoal) firstGoal = upcoming[i];
+        }
+        if (firstNonGoal) $list.append(buildUpcomingCard(firstNonGoal, 'NEXT'));
+        if (firstGoal && firstGoal !== firstNonGoal) $list.append(buildUpcomingCard(firstGoal, 'RANK GOAL'));
+    }
+
+    function buildUpcomingCard(item, label) {
+        var isGoal = label === 'RANK GOAL';
+        var discountStr = item.discount_label || (item.discount_amount > 0 ? '¥' + item.discount_amount.toLocaleString() + ' OFF' : '');
+        return '<div class="upcoming-card' + (isGoal ? ' upcoming-card--goal' : '') + '">' +
+            '<div class="upcoming-card-label">' + label + '</div>' +
+            '<div class="upcoming-card-top"><p class="upcoming-title">' + item.title + '</p>' +
+            (discountStr ? '<span class="upcoming-discount">' + discountStr + '</span>' : '') + '</div>' +
+            '<div class="upcoming-meta"><span class="upcoming-milestone">' + item.point_milestone + 'pt 達成で獲得</span>' +
+            '<span class="upcoming-points-needed">あと <strong>' + item.points_needed + '</strong> pt</span></div>' +
+            '<div class="upcoming-progress-track"><div class="upcoming-progress-fill" style="width:' + item.progress_percent + '%"></div></div></div>';
+    }
+
+    function showPointToast(point) {
+        $('#point-toast-text').text('+' + point + ' ポイント獲得！');
+        var $t = $('#point-toast'); $t.addClass('is-visible');
+        setTimeout(function () { $t.removeClass('is-visible'); }, 2400);
+    }
+
+    function showWelcomeToast() {
+        var $t = $('#welcome-toast'); $t.addClass('is-visible');
+        setTimeout(function () { $t.removeClass('is-visible'); }, 4200);
+    }
+
+    function showCouponToast(newCoupons) {
+        var text = newCoupons.length === 1 ? '「' + newCoupons[0].title + '」を獲得しました！' : newCoupons.length + '枚のクーポンを獲得しました！';
+        $('#coupon-toast-text').text(text);
+        var $t = $('#coupon-toast'); $t.addClass('is-visible');
+        setTimeout(function () { $t.removeClass('is-visible'); }, 3200);
+        setTimeout(function () {
+            switchTab('acquired');
+            var $tabs = $('#coupon-tabs');
+            if ($tabs.length) $tabs[0].scrollIntoView({ behavior: 'smooth' });
+        }, 600);
+    }
+
+    function discountHtml(coupon) {
+        var label = coupon.discount_label || (coupon.discount_amount > 0 ? '¥' + coupon.discount_amount.toLocaleString() + ' OFF' : '');
+        return label ? '<span class="coupon-card-discount">' + label + '</span>' : '';
+    }
+
+    function nl2br(str) { return str.replace(/\n/g, '<br>'); }
+
+    function getParam(name) {
+        var url = window.location.href;
+        var regex = new RegExp('[?&]' + name.replace(/[\[\]]/g, '\\$&') + '(=([^&#]*)|&|#|$)');
+        var results = regex.exec(url);
+        if (!results || !results[2]) return null;
+        return decodeURIComponent(results[2].replace(/\+/g, ' '));
+    }
+    </script>
+</body>
+
+</html>

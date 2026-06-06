@@ -375,12 +375,41 @@ main {
     line-height: 1;
 }
 
-/* ── Upcoming Section ── */
+/* ── Coupon Tabs ── */
 
-.upcoming-section {
+.coupon-tabs {
     width: 100%;
     max-width: 360px;
     margin-top: 28px;
+}
+
+.coupon-tab-header {
+    display: flex;
+    background: #f0f0f0;
+    border-radius: 10px;
+    padding: 3px;
+    margin-bottom: 16px;
+}
+
+.coupon-tab-btn {
+    flex: 1;
+    padding: 8px 4px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: #999;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    -webkit-appearance: none;
+}
+
+.coupon-tab-btn.is-active {
+    background: #fff;
+    color: #333;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
 
 .upcoming-card {
@@ -656,6 +685,7 @@ main {
 
 .coupon-modal-image {
     width: 100%;
+    aspect-ratio: 1 / 1;
     border-radius: 12px;
     object-fit: cover;
 }

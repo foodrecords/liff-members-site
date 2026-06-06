@@ -374,28 +374,42 @@ function showCouponToast(newCoupons) {
         $toast.removeClass('is-visible');
     }, 3200);
 
-    // クーポンセクションへスクロール
+    // 獲得済み特典タブへ切替＆スクロール
     setTimeout(function () {
-        var $section = $('.coupons-section');
-        if ($section.length) {
-            $section[0].scrollIntoView({ behavior: 'smooth' });
+        switchTab('acquired');
+        var $tabs = $('#coupon-tabs');
+        if ($tabs.length) {
+            $tabs[0].scrollIntoView({ behavior: 'smooth' });
         }
     }, 600);
+}
+
+// ── タブ ─────────────────────────────────
+
+function switchTab(tab) {
+    if (tab === 'upcoming') {
+        $('#tab-upcoming').addClass('is-active');
+        $('#tab-acquired').removeClass('is-active');
+        $('#tab-panel-upcoming').show();
+        $('#tab-panel-acquired').hide();
+    } else {
+        $('#tab-acquired').addClass('is-active');
+        $('#tab-upcoming').removeClass('is-active');
+        $('#tab-panel-acquired').show();
+        $('#tab-panel-upcoming').hide();
+    }
 }
 
 // ── 次回の特典 ────────────────────────────
 
 function renderUpcoming(upcoming) {
-    var $section = $('#upcoming-section');
     var $list = $('#upcoming-list');
     $list.empty();
 
     if (!upcoming || upcoming.length === 0) {
-        $section.hide();
+        $list.append('<p class="coupon-empty">次回の特典はありません</p>');
         return;
     }
-
-    $section.show();
 
     // 最初の非ランクゴール → NEXT として表示（なければ何も表示しない）
     var firstNonGoal = null;
