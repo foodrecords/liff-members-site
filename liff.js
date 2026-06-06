@@ -79,7 +79,7 @@ function showPoint(token) {
                 $('#point-card-balance span').text(data.data.point);
                 $('#point-card-number span').text(data.data.number);
                 $('#point-card-name').text(data.data.name || '');
-                updateCardRank(data.data.rank, data.data.next_rank, data.data.next_rank_point);
+                updateCardRank(data.data.rank, data.data.next_rank, data.data.next_rank_point, data.data.point);
                 if (data.data.is_new_member) {
                     showWelcomeToast();
                 }
@@ -113,7 +113,7 @@ function checkCode(token, code) {
             if (data.data) {
                 $('#point-card-balance span').text(data.data.point);
                 $('#point-card-number span').text(data.data.number);
-                updateCardRank(data.data.rank, data.data.next_rank, data.data.next_rank_point);
+                updateCardRank(data.data.rank, data.data.next_rank, data.data.next_rank_point, data.data.point);
                 if (data.data.get_point) {
                     $('#point-card-get').text(data.data.get_point + ' point get!').css('visibility', 'visible');
                     showPointToast(data.data.get_point);
@@ -232,19 +232,44 @@ function renderCoupons(coupons) {
 // ── カードランク ──────────────────────────
 
 var RANK_LABELS = { green: 'GREEN', bronze: 'BRONZE', silver: 'SILVER', gold: 'GOLD' };
+var RANK_FLOOR  = { green: 0, bronze: 10, silver: 30, gold: 80 };
 
-function updateCardRank(rank, nextRank, nextRankPoint) {
+function updateCardRank(rank, nextRank, nextRankPoint, point) {
     var $card = $('#membership-card');
     $card.removeClass('membership-card--green membership-card--bronze membership-card--silver membership-card--gold');
     if (rank) $card.addClass('membership-card--' + rank);
 
     $('#point-card-rank').text(RANK_LABELS[rank] || '');
+    $('#point-card-next').html(buildRankChart(rank, nextRank, nextRankPoint, point));
+}
 
-    if (nextRank && nextRankPoint > 0) {
-        $('#point-card-next').html((RANK_LABELS[nextRank] || nextRank.toUpperCase()) + 'まで<br>あと ' + nextRankPoint + 'pt');
+function buildRankChart(rank, nextRank, nextRankPoint, point) {
+    var r = 16;
+    var circ = +(2 * Math.PI * r).toFixed(2);
+
+    var filled, empty, innerHtml;
+    if (!nextRank) {
+        filled = circ;
+        empty = 0;
+        innerHtml = '<text class="rank-chart-value" x="22" y="26" text-anchor="middle">MAX</text>';
     } else {
-        $('#point-card-next').html('最高ランク<br>達成');
+        var from = RANK_FLOOR[rank] || 0;
+        var span = (point + nextRankPoint) - from;
+        var pct = span > 0 ? Math.min(100, Math.max(0, (point - from) / span * 100)) : 0;
+        filled = +(circ * pct / 100).toFixed(2);
+        empty  = +(circ - filled).toFixed(2);
+        innerHtml =
+            '<text class="rank-chart-label" x="22" y="20" text-anchor="middle">あと</text>' +
+            '<text class="rank-chart-value" x="22" y="31" text-anchor="middle">' + nextRankPoint + 'pt</text>';
     }
+
+    return '<svg class="rank-progress-chart" viewBox="0 0 44 44">' +
+        '<circle class="rank-progress-bg" cx="22" cy="22" r="' + r + '"/>' +
+        '<circle class="rank-progress-fill" cx="22" cy="22" r="' + r + '"' +
+        ' stroke-dasharray="' + filled + ' ' + empty + '"' +
+        ' transform="rotate(-90 22 22)"/>' +
+        innerHtml +
+        '</svg>';
 }
 
 // ── モーダル ──────────────────────────────
@@ -364,7 +389,7 @@ function useCouponInStore() {
         },
         error: function (jqXHR) {
             var msg = jqXHR.responseJSON && jqXHR.responseJSON.message || 'エラーが発生しました';
-            alert(msg);
+            showErrorBanner(msg);
             $('#modal-store-btn').prop('disabled', false).text('店舗で使用する');
         }
     });
@@ -381,6 +406,15 @@ function useCouponMobile() {
 }
 
 // ── トースト ──────────────────────────────
+
+function showErrorBanner(msg) {
+    $('#error-toast-text').text(msg);
+    var $toast = $('#error-toast');
+    $toast.addClass('is-visible');
+    setTimeout(function () {
+        $toast.removeClass('is-visible');
+    }, 3500);
+}
 
 function showPointToast(point) {
     $('#point-toast-text').text('+' + point + ' ポイント獲得！');

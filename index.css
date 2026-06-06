@@ -149,10 +149,43 @@ main {
 }
 
 .card-rank-next {
-    font-size: 10px;
-    color: rgba(255, 255, 255, 0.75);
-    text-align: right;
-    line-height: 1.5;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+/* ── Rank Progress Chart ── */
+
+.rank-progress-chart {
+    width: 60px;
+    height: 60px;
+}
+
+.rank-progress-bg {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.2);
+    stroke-width: 3;
+}
+
+.rank-progress-fill {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.85);
+    stroke-width: 3;
+    stroke-linecap: round;
+}
+
+.rank-chart-label {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 7.5px;
+    fill: rgba(255, 255, 255, 0.7);
+    font-weight: 400;
+}
+
+.rank-chart-value {
+    font-family: 'Roboto', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    fill: rgba(255, 255, 255, 0.95);
 }
 
 .point-label {
@@ -452,7 +485,6 @@ main {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    filter: blur(1.5px) brightness(0.65);
 }
 
 .upcoming-card-thumb-lock {
@@ -461,6 +493,7 @@ main {
     display: flex;
     align-items: center;
     justify-content: center;
+    background: rgba(0, 0, 0, 0.3);
     color: rgba(255, 255, 255, 0.9);
     font-size: 15px;
 }
@@ -645,6 +678,34 @@ main {
     font-weight: 700;
     text-align: center;
     box-shadow: 0 4px 20px rgba(46, 125, 50, 0.4);
+    border-radius: 0 0 18px 18px;
+}
+
+/* ── Error Toast ── */
+
+.error-toast {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 202;
+    pointer-events: none;
+    transform: translateY(-100%);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.error-toast.is-visible {
+    transform: translateY(0);
+}
+
+.error-toast-inner {
+    background: linear-gradient(135deg, #ef9a9a, #c62828);
+    color: #fff;
+    padding: 16px 24px 14px;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(198, 40, 40, 0.4);
     border-radius: 0 0 18px 18px;
 }
 
