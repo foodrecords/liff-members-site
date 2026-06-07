@@ -354,17 +354,34 @@ function updateCardRank(rank, nextRank, nextRankPoint, totalEarned) {
 }
 
 function buildRankProgress(rank, nextRank, nextRankPoint, totalEarned) {
+    var r = 16;
+    var circ = +(2 * Math.PI * r).toFixed(2);
+
     if (!nextRank) {
-        return '<p class="rank-progress-max">MAX</p>';
+        return '<svg class="rank-progress-chart" viewBox="0 0 44 44">' +
+            '<circle class="rank-progress-bg" cx="22" cy="22" r="' + r + '"/>' +
+            '<circle class="rank-progress-fill" cx="22" cy="22" r="' + r + '"' +
+            ' stroke-dasharray="' + circ + ' 0"' +
+            ' transform="rotate(-90 22 22)"/>' +
+            '<text class="rank-chart-value" x="22" y="26" text-anchor="middle">MAX</text>' +
+            '</svg>';
     }
+
     var from = RANK_FLOOR[rank] || 0;
     var current = totalEarned - from;
     var total = current + nextRankPoint;
-    return '<p class="rank-progress-fraction">' +
-               current.toLocaleString() +
-               '<span>/' + total.toLocaleString() + '</span>' +
-           '</p>' +
-           '<p class="rank-progress-label">あと' + nextRankPoint + 'ptで' + RANK_LABELS[nextRank] + '</p>';
+    var pct = total > 0 ? Math.min(100, Math.max(0, current / total * 100)) : 0;
+    var filled = +(circ * pct / 100).toFixed(2);
+    var empty   = +(circ - filled).toFixed(2);
+
+    return '<svg class="rank-progress-chart" viewBox="0 0 44 44">' +
+        '<circle class="rank-progress-bg" cx="22" cy="22" r="' + r + '"/>' +
+        '<circle class="rank-progress-fill" cx="22" cy="22" r="' + r + '"' +
+        ' stroke-dasharray="' + filled + ' ' + empty + '"' +
+        ' transform="rotate(-90 22 22)"/>' +
+        '</svg>' +
+        '<p class="rank-progress-fraction">' + current.toLocaleString() + '<span>/' + total.toLocaleString() + '</span></p>' +
+        '<p class="rank-progress-label">あと' + nextRankPoint + 'ptで' + RANK_LABELS[nextRank] + '</p>';
 }
 
 // ── モーダル ──────────────────────────────
