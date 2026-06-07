@@ -456,6 +456,13 @@ main {
     display: flex;
     align-items: center;
     gap: 12px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: box-shadow 0.15s ease;
+}
+
+.reward-card:active {
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
 .reward-card-thumb {
@@ -895,6 +902,34 @@ main {
 
 .coupon-modal-mobile-btn:active {
     background: rgba(232, 114, 114, 0.06);
+}
+
+.coupon-modal-exchange-btn {
+    width: 100%;
+    height: 52px;
+    background: linear-gradient(135deg, #66bb6a, #388e3c);
+    color: #fff;
+    border: none;
+    border-radius: 26px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(56, 142, 60, 0.35);
+    transition: opacity 0.15s ease;
+    -webkit-appearance: none;
+}
+
+.coupon-modal-exchange-btn:active {
+    opacity: 0.8;
+}
+
+.coupon-modal-exchange-btn--disabled,
+.coupon-modal-exchange-btn:disabled {
+    background: #e0e0e0;
+    color: #aaa;
+    cursor: default;
+    box-shadow: none;
 }
 
 /* ── Sticky Button ── */

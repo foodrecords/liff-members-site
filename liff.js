@@ -11,6 +11,13 @@ $(document).ready(function () {
     $('#modal-overlay, #modal-close-btn').on('click', closeCouponModal);
     $('#modal-store-btn').on('click', useCouponInStore);
     $('#modal-mobile-btn').on('click', useCouponMobile);
+    $('#modal-reward-exchange-btn').on('click', function () {
+        var id = $(this).data('reward-id');
+        if (rewardDataMap[id]) {
+            closeCouponModal();
+            confirmExchange(rewardDataMap[id]);
+        }
+    });
 });
 
 function initializeLiff(liffId) {
@@ -115,6 +122,9 @@ function checkCode(token, code) {
                     $('#point-card-get').text(data.data.get_point + ' point get!').css('visibility', 'visible');
                     showPointToast(data.data.get_point);
                 }
+                var cleanUrl = new URL(window.location.href);
+                cleanUrl.searchParams.delete('code');
+                history.replaceState(null, '', cleanUrl.toString());
                 showCoupons(token);
                 refreshRewardButtons();
             } else {
@@ -257,6 +267,11 @@ function renderRewards(rewards) {
         $list.append(buildRewardCard(reward));
     });
 
+    $list.off('click', '.reward-card').on('click', '.reward-card', function () {
+        var id = $(this).data('id');
+        if (rewardDataMap[id]) openRewardModal(rewardDataMap[id]);
+    });
+
     $list.off('click', '.reward-exchange-btn').on('click', '.reward-exchange-btn', function (e) {
         e.stopPropagation();
         var id = $(this).closest('.reward-card').data('id');
@@ -352,9 +367,11 @@ function buildRankChart(rank, nextRank, nextRankPoint, totalEarned) {
         var pct = span > 0 ? Math.min(100, Math.max(0, (totalEarned - from) / span * 100)) : 0;
         filled = +(circ * pct / 100).toFixed(2);
         empty  = +(circ - filled).toFixed(2);
+        var valueFontSize = String(nextRankPoint).length >= 4 ? '8.5px' : '11px';
+        var valueY = String(nextRankPoint).length >= 4 ? 32 : 31;
         innerHtml =
             '<text class="rank-chart-label" x="22" y="20" text-anchor="middle">あと</text>' +
-            '<text class="rank-chart-value" x="22" y="31" text-anchor="middle">' + nextRankPoint + 'pt</text>';
+            '<text class="rank-chart-value" style="font-size:' + valueFontSize + '" x="22" y="' + valueY + '" text-anchor="middle">' + nextRankPoint + 'pt</text>';
     }
 
     return '<svg class="rank-progress-chart" viewBox="0 0 44 44">' +
@@ -397,6 +414,8 @@ function openCouponModal(coupon) {
         $('#modal-expiry').hide();
     }
 
+    $('#modal-reward-exchange-btn').hide();
+
     if (coupon.used) {
         var usedLabel = '使用済み';
         if (coupon.used_at) {
@@ -411,6 +430,43 @@ function openCouponModal(coupon) {
         $('#modal-store-btn').show().prop('disabled', false).text('店舗で使用する');
         $('#modal-mobile-btn').show();
     }
+
+    $('#coupon-modal').addClass('is-open');
+    $('body').addClass('modal-open');
+}
+
+function openRewardModal(reward) {
+    var canAfford = _currentPoint >= reward.required_points;
+
+    $('#modal-title').text(reward.title);
+
+    if (reward.image_url) {
+        $('#modal-image').attr('src', reward.image_url).show();
+    } else {
+        $('#modal-image').attr('src', '').hide();
+    }
+
+    if (reward.description) {
+        $('#modal-desc').html(nl2br($('<div>').text(reward.description).html()));
+        $('#modal-desc-block').show();
+    } else {
+        $('#modal-desc-block').hide();
+    }
+
+    $('#modal-expiry').hide();
+    $('#modal-used-note').hide();
+    $('#modal-store-btn').hide();
+    $('#modal-mobile-btn').hide();
+
+    var btnText = canAfford
+        ? reward.required_points + ' pt で交換する'
+        : '残高不足（' + reward.required_points + ' pt 必要）';
+    $('#modal-reward-exchange-btn')
+        .text(btnText)
+        .toggleClass('coupon-modal-exchange-btn--disabled', !canAfford)
+        .prop('disabled', !canAfford)
+        .data('reward-id', reward.id)
+        .show();
 
     $('#coupon-modal').addClass('is-open');
     $('body').addClass('modal-open');
