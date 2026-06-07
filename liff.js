@@ -85,6 +85,7 @@ function showPoint(token) {
                 $('#point-card-number span').text(data.data.number);
                 $('#point-card-name').text(data.data.name || '');
                 updateCardRank(data.data.rank, data.data.next_rank, data.data.next_rank_point, data.data.total_earned_point);
+                refreshRewardButtons();
                 if (data.data.is_new_member) {
                     showWelcomeToast();
                 }
