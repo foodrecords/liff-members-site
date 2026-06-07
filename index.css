@@ -152,7 +152,7 @@ main {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    gap: 4px;
+    gap: 6px;
 }
 
 /* ── Rank Progress Chart ── */
@@ -186,7 +186,7 @@ main {
 
 .rank-progress-fraction {
     font-family: 'Roboto', sans-serif;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 700;
     color: rgba(255, 255, 255, 0.95);
     text-align: right;
@@ -197,18 +197,28 @@ main {
 .rank-progress-fraction span {
     font-weight: 400;
     font-size: 11px;
-    opacity: 0.65;
+    opacity: 0.6;
 }
 
 .rank-progress-label {
     font-family: 'Noto Sans JP', sans-serif;
-    font-size: 9px;
+    font-size: 9.5px;
     font-weight: 400;
-    color: rgba(255, 255, 255, 0.72);
+    color: rgba(255, 255, 255, 0.75);
     text-align: right;
     white-space: nowrap;
     line-height: 1.4;
 }
+
+/* 次ランク名カラー */
+.rank-next-name {
+    font-weight: 900;
+    letter-spacing: 0.04em;
+}
+
+.rank-next-name--bronze { color: #ffcc80; }
+.rank-next-name--silver { color: #f0f0f0; }
+.rank-next-name--gold   { color: #ffd54f; }
 
 .point-label {
     font-size: 12px;

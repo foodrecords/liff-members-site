@@ -349,22 +349,26 @@ function updateCardRank(rank, nextRank, nextRankPoint, totalEarned) {
     $card.removeClass('membership-card--green membership-card--bronze membership-card--silver membership-card--gold');
     if (rank) $card.addClass('membership-card--' + rank);
 
-    $('#point-card-rank').text(RANK_LABELS[rank] || '');
     $('#point-card-next').html(buildRankProgress(rank, nextRank, nextRankPoint, totalEarned || 0));
 }
 
 function buildRankProgress(rank, nextRank, nextRankPoint, totalEarned) {
     var r = 16;
     var circ = +(2 * Math.PI * r).toFixed(2);
+    var rankLabel = RANK_LABELS[rank] || '';
+    var badgeHtml = rankLabel
+        ? '<p class="card-rank-badge">' + rankLabel + '</p>'
+        : '';
 
     if (!nextRank) {
-        return '<svg class="rank-progress-chart" viewBox="0 0 44 44">' +
+        var fullSvg = '<svg class="rank-progress-chart" viewBox="0 0 44 44">' +
             '<circle class="rank-progress-bg" cx="22" cy="22" r="' + r + '"/>' +
             '<circle class="rank-progress-fill" cx="22" cy="22" r="' + r + '"' +
             ' stroke-dasharray="' + circ + ' 0"' +
             ' transform="rotate(-90 22 22)"/>' +
             '<text class="rank-chart-value" x="22" y="26" text-anchor="middle">MAX</text>' +
             '</svg>';
+        return badgeHtml + fullSvg;
     }
 
     var from = RANK_FLOOR[rank] || 0;
@@ -374,14 +378,23 @@ function buildRankProgress(rank, nextRank, nextRankPoint, totalEarned) {
     var filled = +(circ * pct / 100).toFixed(2);
     var empty   = +(circ - filled).toFixed(2);
 
-    return '<svg class="rank-progress-chart" viewBox="0 0 44 44">' +
+    var svgHtml = '<svg class="rank-progress-chart" viewBox="0 0 44 44">' +
         '<circle class="rank-progress-bg" cx="22" cy="22" r="' + r + '"/>' +
         '<circle class="rank-progress-fill" cx="22" cy="22" r="' + r + '"' +
         ' stroke-dasharray="' + filled + ' ' + empty + '"' +
         ' transform="rotate(-90 22 22)"/>' +
-        '</svg>' +
-        '<p class="rank-progress-fraction">' + current.toLocaleString() + '<span>/' + total.toLocaleString() + '</span></p>' +
-        '<p class="rank-progress-label">あと' + nextRankPoint + 'ptで' + RANK_LABELS[nextRank] + '</p>';
+        '</svg>';
+
+    var fractionHtml = '<p class="rank-progress-fraction">' +
+        current.toLocaleString() +
+        '<span>/' + total.toLocaleString() + '</span>' +
+        '</p>';
+
+    var nextRankHtml = '<span class="rank-next-name rank-next-name--' + nextRank + '">' +
+        RANK_LABELS[nextRank] + '</span>';
+    var labelHtml = '<p class="rank-progress-label">あと' + nextRankPoint + 'ptで' + nextRankHtml + '</p>';
+
+    return badgeHtml + svgHtml + fractionHtml + labelHtml;
 }
 
 // ── モーダル ──────────────────────────────
