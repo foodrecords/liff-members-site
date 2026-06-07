@@ -350,38 +350,21 @@ function updateCardRank(rank, nextRank, nextRankPoint, totalEarned) {
     if (rank) $card.addClass('membership-card--' + rank);
 
     $('#point-card-rank').text(RANK_LABELS[rank] || '');
-    $('#point-card-next').html(buildRankChart(rank, nextRank, nextRankPoint, totalEarned || 0));
+    $('#point-card-next').html(buildRankProgress(rank, nextRank, nextRankPoint, totalEarned || 0));
 }
 
-function buildRankChart(rank, nextRank, nextRankPoint, totalEarned) {
-    var r = 16;
-    var circ = +(2 * Math.PI * r).toFixed(2);
-
-    var filled, empty, innerHtml;
+function buildRankProgress(rank, nextRank, nextRankPoint, totalEarned) {
     if (!nextRank) {
-        filled = circ;
-        empty = 0;
-        innerHtml = '<text class="rank-chart-value" x="22" y="26" text-anchor="middle">MAX</text>';
-    } else {
-        var from = RANK_FLOOR[rank] || 0;
-        var span = (totalEarned + nextRankPoint) - from;
-        var pct = span > 0 ? Math.min(100, Math.max(0, (totalEarned - from) / span * 100)) : 0;
-        filled = +(circ * pct / 100).toFixed(2);
-        empty  = +(circ - filled).toFixed(2);
-        var valueFontSize = String(nextRankPoint).length >= 4 ? '8.5px' : '11px';
-        var valueY = String(nextRankPoint).length >= 4 ? 32 : 31;
-        innerHtml =
-            '<text class="rank-chart-label" x="22" y="20" text-anchor="middle">あと</text>' +
-            '<text class="rank-chart-value" style="font-size:' + valueFontSize + '" x="22" y="' + valueY + '" text-anchor="middle">' + nextRankPoint + 'pt</text>';
+        return '<p class="rank-progress-max">MAX</p>';
     }
-
-    return '<svg class="rank-progress-chart" viewBox="0 0 44 44">' +
-        '<circle class="rank-progress-bg" cx="22" cy="22" r="' + r + '"/>' +
-        '<circle class="rank-progress-fill" cx="22" cy="22" r="' + r + '"' +
-        ' stroke-dasharray="' + filled + ' ' + empty + '"' +
-        ' transform="rotate(-90 22 22)"/>' +
-        innerHtml +
-        '</svg>';
+    var from = RANK_FLOOR[rank] || 0;
+    var current = totalEarned - from;
+    var total = current + nextRankPoint;
+    return '<p class="rank-progress-fraction">' +
+               current.toLocaleString() +
+               '<span>/' + total.toLocaleString() + '</span>' +
+           '</p>' +
+           '<p class="rank-progress-label">あと' + nextRankPoint + 'ptで' + RANK_LABELS[nextRank] + '</p>';
 }
 
 // ── モーダル ──────────────────────────────

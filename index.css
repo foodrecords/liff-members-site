@@ -131,7 +131,7 @@ main {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    gap: 6px;
+    justify-content: center;
     flex-shrink: 0;
 }
 
@@ -150,42 +150,46 @@ main {
 
 .card-rank-next {
     display: flex;
-    align-items: center;
-    justify-content: flex-end;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
 }
 
-/* ── Rank Progress Chart ── */
+/* ── Rank Progress Text ── */
 
-.rank-progress-chart {
-    width: 60px;
-    height: 60px;
-}
-
-.rank-progress-bg {
-    fill: none;
-    stroke: rgba(255, 255, 255, 0.2);
-    stroke-width: 3;
-}
-
-.rank-progress-fill {
-    fill: none;
-    stroke: rgba(255, 255, 255, 0.85);
-    stroke-width: 3;
-    stroke-linecap: round;
-}
-
-.rank-chart-label {
-    font-family: 'Noto Sans JP', sans-serif;
-    font-size: 7.5px;
-    fill: rgba(255, 255, 255, 0.7);
-    font-weight: 400;
-}
-
-.rank-chart-value {
+.rank-progress-fraction {
     font-family: 'Roboto', sans-serif;
-    font-size: 11px;
+    font-size: 15px;
     font-weight: 700;
-    fill: rgba(255, 255, 255, 0.95);
+    color: rgba(255, 255, 255, 0.95);
+    text-align: right;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+}
+
+.rank-progress-fraction span {
+    font-weight: 400;
+    font-size: 13px;
+    opacity: 0.65;
+}
+
+.rank-progress-label {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 9px;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.72);
+    text-align: right;
+    white-space: nowrap;
+    line-height: 1.4;
+}
+
+.rank-progress-max {
+    font-family: 'Roboto', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.95);
+    text-align: right;
+    letter-spacing: 0.08em;
 }
 
 .point-label {
@@ -231,13 +235,21 @@ main {
     z-index: 1;
 }
 
+.card-footer-left {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+    margin-right: 12px;
+}
+
 #point-card-name {
     font-family: 'Noto Sans JP', sans-serif;
     font-size: 11px;
     font-weight: 700;
     opacity: 0.8;
     letter-spacing: 0.04em;
-    max-width: 55%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
