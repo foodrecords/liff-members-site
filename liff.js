@@ -326,7 +326,7 @@ function confirmExchange(reward) {
 // ── カードランク ──────────────────────────
 
 var RANK_LABELS = { green: 'GREEN', bronze: 'BRONZE', silver: 'SILVER', gold: 'GOLD' };
-var RANK_FLOOR  = { green: 0, bronze: 10, silver: 30, gold: 80 };
+var RANK_FLOOR  = { green: 0, bronze: 1000, silver: 3000, gold: 8000 };
 
 function updateCardRank(rank, nextRank, nextRankPoint, totalEarned) {
     var $card = $('#membership-card');
