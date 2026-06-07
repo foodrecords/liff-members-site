@@ -45,14 +45,16 @@
 
         <div class="coupon-tabs" id="coupon-tabs">
             <div class="coupon-tab-header">
-                <button class="coupon-tab-btn is-active" id="tab-upcoming" onclick="switchTab('upcoming')">次回の特典</button>
-                <button class="coupon-tab-btn" id="tab-acquired" onclick="switchTab('acquired')">獲得済みの特典</button>
+                <button class="coupon-tab-btn is-active" id="tab-acquired" onclick="switchTab('acquired')">獲得済みの特典</button>
+                <button class="coupon-tab-btn" id="tab-exchange" onclick="switchTab('exchange')">ポイントを使う</button>
             </div>
-            <div id="tab-panel-upcoming">
-                <div id="upcoming-list"></div>
-            </div>
-            <div id="tab-panel-acquired" style="display:none">
+            <div id="tab-panel-acquired">
                 <div id="coupon-list">
+                    <p class="coupon-empty">読み込み中...</p>
+                </div>
+            </div>
+            <div id="tab-panel-exchange" style="display:none">
+                <div id="reward-list">
                     <p class="coupon-empty">読み込み中...</p>
                 </div>
             </div>
