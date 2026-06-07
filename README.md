@@ -3,7 +3,7 @@
 FOOD RECORDS メンバーズの LIFF フロントエンド。
 GitHub Pages でホスティングされ、LINE アプリ内から開く。
 
-- 本番 URL: https://members.food-records.com
+- 本番 URL: https://members.agaruke.com
 - LIFF ID: `2000938587-06YmdyJ5`
 
 ## 構成ファイル
