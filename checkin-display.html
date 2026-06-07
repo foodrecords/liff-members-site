@@ -21,6 +21,32 @@
             padding: 2vh 4vw;
         }
 
+        /* ── Image mode ── */
+        .card-wrapper {
+            position: relative;
+            aspect-ratio: 3/4;
+            width: min(100vw, 75dvh);
+            flex-shrink: 0;
+        }
+        .poster-bg {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .qr-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* ── CSS fallback ── */
         .poster {
             width: 100%;
             height: 100%;
@@ -81,7 +107,8 @@
             background: #fff;
         }
 
-        #qrcode canvas, #qrcode img { display: block; border-radius: 4px; }
+        #qrcode canvas, #qrcode img,
+        #qrcode-css canvas, #qrcode-css img { display: block; border-radius: 4px; }
 
         /* ── Timer ── */
         .timer-row {
@@ -212,7 +239,6 @@
             font-size: clamp(0.6rem, 1.1vw, 0.9rem);
             color: #666;
         }
-        /* 矢印をサークル中央に揃える */
         .rank-arrow {
             color: #888;
             font-size: clamp(0.9rem, 1.6vw, 1.4rem);
@@ -273,7 +299,32 @@
     </div>
 </div>
 
-<div class="poster">
+<!-- メイン: 画像ベース（checkin-bg.webp が存在する場合） -->
+<div id="image-mode" class="card-wrapper">
+    <img src="checkin-bg.webp" alt="" class="poster-bg" onerror="activateCssMode()">
+    <div class="qr-overlay">
+        <div class="qr-outer">
+            <div class="spark sp1"></div>
+            <div class="spark sp2"></div>
+            <div class="spark sp3"></div>
+            <div class="spark sp4"></div>
+            <div class="spark sp5"></div>
+            <div class="spark sp6"></div>
+            <div class="spark sp7"></div>
+            <div class="spark sp8"></div>
+            <div class="qr-frame">
+                <div id="qrcode"></div>
+            </div>
+        </div>
+        <div class="timer-row">
+            次の更新: <strong class="next-update-time">--:--</strong>
+            <button class="refresh-btn" onclick="secret && refreshQR(secret)">今すぐ更新</button>
+        </div>
+    </div>
+</div>
+
+<!-- フォールバック: CSSベース（画像読み込み失敗時） -->
+<div id="css-mode" class="poster" style="display:none">
 
     <!-- Header -->
     <div class="poster-header">
@@ -300,14 +351,14 @@
             <div class="spark sp7"></div>
             <div class="spark sp8"></div>
             <div class="qr-frame">
-                <div id="qrcode"></div>
+                <div id="qrcode-css"></div>
             </div>
         </div>
     </div>
 
     <!-- Timer -->
     <div class="timer-row">
-        次の更新: <strong id="next-update-time">--:--</strong>
+        次の更新: <strong class="next-update-time">--:--</strong>
         <button class="refresh-btn" onclick="secret && refreshQR(secret)">今すぐ更新</button>
     </div>
 
@@ -374,8 +425,9 @@
     const WINDOW_SEC = 6 * 60 * 60;
 
     var secret = null;
-    var qrInstance = null;
+    var qrInstances = {};
     var timerInterval = null;
+    var cssMode = false;
 
     // URLハッシュからシークレットを自動取得
     (function () {
@@ -401,6 +453,13 @@
         startTimer(s);
     }
 
+    function activateCssMode() {
+        cssMode = true;
+        document.getElementById('image-mode').style.display = 'none';
+        document.getElementById('css-mode').style.display = 'flex';
+        if (secret) refreshQR(secret);
+    }
+
     // Go の totp.Generate と同じアルゴリズム
     // HMAC-SHA256(secret, BigEndian uint64(floor(unixTs / WINDOW_SEC)))[:12 hex chars]
     async function generateToken(s, unixTs) {
@@ -419,25 +478,42 @@
             .join('').substring(0, 12);
     }
 
+    function getQrSize(id) {
+        if (id === 'qrcode') {
+            var wrapper = document.getElementById('image-mode');
+            if (wrapper && wrapper.clientWidth > 0) {
+                // 50% of card width, minus qr-outer padding (2vmin*2) and qr-frame padding (1.5vmin*2) + border (3px*2)
+                var vmin = Math.min(wrapper.clientWidth, wrapper.clientHeight) / 100;
+                return Math.round(wrapper.clientWidth * 0.5 - 7 * vmin - 6);
+            }
+        }
+        return Math.round(Math.min(window.innerWidth, window.innerHeight) * 0.42);
+    }
+
     async function refreshQR(s) {
         var token = await generateToken(s, Math.floor(Date.now() / 1000));
         var liffId = window.APP_CONFIG && window.APP_CONFIG.liffId;
         var url = 'https://liff.line.me/' + liffId + '?code=DL_' + token;
 
-        var qrSize = Math.round(Math.min(window.innerWidth, window.innerHeight) * 0.42);
-        if (qrInstance) {
-            qrInstance.clear();
-            qrInstance.makeCode(url);
-        } else {
-            qrInstance = new QRCode(document.getElementById('qrcode'), {
-                text: url,
-                width: qrSize,
-                height: qrSize,
-                colorDark: '#111111',
-                colorLight: '#ffffff',
-                correctLevel: QRCode.CorrectLevel.M,
-            });
-        }
+        var targets = cssMode ? ['qrcode-css'] : ['qrcode'];
+        targets.forEach(function(id) {
+            var el = document.getElementById(id);
+            if (!el) return;
+            var size = getQrSize(id);
+            if (qrInstances[id]) {
+                qrInstances[id].clear();
+                qrInstances[id].makeCode(url);
+            } else {
+                qrInstances[id] = new QRCode(el, {
+                    text: url,
+                    width: size,
+                    height: size,
+                    colorDark: '#111111',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.M,
+                });
+            }
+        });
     }
 
     function getNextUpdateTimeJST() {
@@ -454,7 +530,10 @@
         var currentWindow = Math.floor(Date.now() / 1000 / WINDOW_SEC);
 
         function tick() {
-            document.getElementById('next-update-time').textContent = getNextUpdateTimeJST();
+            var timeText = getNextUpdateTimeJST();
+            document.querySelectorAll('.next-update-time').forEach(function(el) {
+                el.textContent = timeText;
+            });
             var w = Math.floor(Date.now() / 1000 / WINDOW_SEC);
             if (w !== currentWindow) {
                 currentWindow = w;
