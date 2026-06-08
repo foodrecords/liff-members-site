@@ -399,7 +399,7 @@ main {
 }
 
 .coupon-title {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 700;
     color: #333;
     margin-bottom: 4px;
@@ -1012,4 +1012,123 @@ main {
 .scan-button:active {
     transform: translateY(1px);
     box-shadow: 0 3px 10px rgba(232, 114, 114, 0.3);
+}
+
+/* ── Rank-Up Animation ── */
+
+@keyframes rank-up-flash {
+    0%   { transform: scale(1);    filter: brightness(1); }
+    25%  { transform: scale(1.05); filter: brightness(1.4); }
+    55%  { transform: scale(0.98); filter: brightness(1.1); }
+    75%  { transform: scale(1.02); filter: brightness(1); }
+    100% { transform: scale(1);    filter: brightness(1); }
+}
+
+.membership-card--rank-up {
+    animation: rank-up-flash 0.9s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ── Rank-Up Toast ── */
+
+.rank-up-toast {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 203;
+    pointer-events: none;
+    transform: translateY(-100%);
+    transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.rank-up-toast.is-visible {
+    transform: translateY(0);
+}
+
+.rank-up-toast-inner {
+    background: linear-gradient(135deg, #ffe082, #ffb300, #e65100);
+    color: #fff;
+    padding: 16px 24px 14px;
+    font-size: 15px;
+    font-weight: 700;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(255, 179, 0, 0.5);
+    border-radius: 0 0 18px 18px;
+}
+
+/* ── Custom Dialog ── */
+
+.custom-dialog {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.custom-dialog.is-open {
+    pointer-events: auto;
+    opacity: 1;
+}
+
+.custom-dialog-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.custom-dialog-content {
+    position: relative;
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px 20px 16px;
+    width: 100%;
+    max-width: 320px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.22);
+}
+
+.custom-dialog-message {
+    font-size: 14px;
+    color: #333;
+    line-height: 1.75;
+    margin-bottom: 20px;
+    white-space: pre-wrap;
+    text-align: center;
+}
+
+.custom-dialog-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.custom-dialog-btn {
+    flex: 1;
+    height: 44px;
+    border: none;
+    border-radius: 22px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    -webkit-appearance: none;
+    transition: opacity 0.15s ease;
+}
+
+.custom-dialog-btn:active {
+    opacity: 0.75;
+}
+
+.custom-dialog-btn--cancel {
+    background: #f0f0f0;
+    color: #666;
+}
+
+.custom-dialog-btn--ok {
+    background: #388e3c;
+    color: #fff;
 }

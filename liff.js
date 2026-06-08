@@ -4,6 +4,8 @@ var rewardDataMap = {};
 var currentModalCoupon = null;
 var _couponToken = null;
 var _currentPoint = 0;
+var _currentRank = null;
+var RANK_ORDER = { green: 0, bronze: 1, silver: 2, gold: 3 };
 
 $(document).ready(function () {
     initializeLiff(window.APP_CONFIG.liffId);
@@ -20,13 +22,50 @@ $(document).ready(function () {
     });
 });
 
+// ── カスタムダイアログ ─────────────────────────
+
+function showAlert(msg, onClose) {
+    var dismiss = function () {
+        closeDialog();
+        if (onClose) onClose();
+    };
+    $('#dialog-message').text(msg);
+    $('#dialog-cancel-btn').hide();
+    $('#dialog-ok-btn').off('click').on('click', dismiss);
+    $('#dialog-overlay').off('click').on('click', dismiss);
+    $('#custom-dialog').addClass('is-open');
+    $('body').addClass('dialog-open');
+}
+
+function showConfirm(msg, onOk, onCancel) {
+    var dismiss = function () {
+        closeDialog();
+        if (onCancel) onCancel();
+    };
+    $('#dialog-message').text(msg);
+    $('#dialog-cancel-btn').show().off('click').on('click', dismiss);
+    $('#dialog-overlay').off('click').on('click', dismiss);
+    $('#dialog-ok-btn').off('click').on('click', function () {
+        closeDialog();
+        onOk();
+    });
+    $('#custom-dialog').addClass('is-open');
+    $('body').addClass('dialog-open');
+}
+
+function closeDialog() {
+    $('#custom-dialog').removeClass('is-open');
+    $('body').removeClass('dialog-open');
+}
+
 function initializeLiff(liffId) {
     liff
         .init({ liffId: liffId })
         .then(() => {
             if (!liff.isInClient() && !liff.isLoggedIn()) {
-                window.alert("LINEアカウントでログインするか、LINEアプリから開いてください。");
-                liff.login({ redirectUri: location.href });
+                showAlert("LINEアカウントでログインするか、LINEアプリから開いてください。", function () {
+                    liff.login({ redirectUri: location.href });
+                });
             } else {
                 const accessToken = liff.getAccessToken();
                 if (accessToken) {
@@ -42,7 +81,7 @@ function initializeLiff(liffId) {
             }
         })
         .catch((err) => {
-            window.alert('LIFF Initialization failed: ' + err);
+            showAlert('LIFF Initialization failed: ' + err);
         });
 }
 
@@ -97,7 +136,7 @@ function showPoint(token) {
             hideLoader();
             var msg = jqXHR.responseJSON && jqXHR.responseJSON.message || jqXHR.statusText || 'network error (status=' + jqXHR.status + ')';
             console.error('[API] /members error:', jqXHR.status, msg);
-            alert(msg);
+            showAlert(msg);
         }
     });
 }
@@ -135,7 +174,7 @@ function checkCode(token, code) {
         error: function (jqXHR) {
             var msg = jqXHR.responseJSON && jqXHR.responseJSON.message || jqXHR.statusText || 'network error (status=' + jqXHR.status + ')';
             console.error('[API] /qrcode error:', jqXHR.status, msg);
-            alert(msg);
+            showAlert(msg);
         }
     });
 }
@@ -312,31 +351,34 @@ function refreshRewardButtons() {
 }
 
 function confirmExchange(reward) {
-    if (!confirm('「' + reward.title + '」と交換しますか？\n' + reward.required_points + ' ポイントを消費します。')) return;
-
-    var apiurl = window.APP_CONFIG.apiUrl;
-    $.ajax({
-        beforeSend: function (request) {
-            request.setRequestHeader('Authorization', 'Bearer ' + _couponToken);
-        },
-        dataType: "json",
-        url: apiurl + '/rewards/' + reward.id + '/exchange',
-        type: 'post',
-        success: function (data) {
-            if (data.data) {
-                _currentPoint = data.data.new_point;
-                $('#point-card-balance span').text(_currentPoint);
-                newlyAcquiredIds[data.data.coupon_id] = true;
-                showCouponToast(data.data.title);
-                showCoupons();
-                refreshRewardButtons();
-            }
-        },
-        error: function (jqXHR) {
-            var msg = jqXHR.responseJSON && jqXHR.responseJSON.message || 'エラーが発生しました';
-            showErrorBanner(msg);
+    showConfirm(
+        '「' + reward.title + '」と交換しますか？\n' + reward.required_points + ' ポイントを消費します。',
+        function () {
+            var apiurl = window.APP_CONFIG.apiUrl;
+            $.ajax({
+                beforeSend: function (request) {
+                    request.setRequestHeader('Authorization', 'Bearer ' + _couponToken);
+                },
+                dataType: "json",
+                url: apiurl + '/rewards/' + reward.id + '/exchange',
+                type: 'post',
+                success: function (data) {
+                    if (data.data) {
+                        _currentPoint = data.data.new_point;
+                        $('#point-card-balance span').text(_currentPoint);
+                        newlyAcquiredIds[data.data.coupon_id] = true;
+                        showCouponToast(data.data.title);
+                        showCoupons();
+                        refreshRewardButtons();
+                    }
+                },
+                error: function (jqXHR) {
+                    var msg = jqXHR.responseJSON && jqXHR.responseJSON.message || 'エラーが発生しました';
+                    showErrorBanner(msg);
+                }
+            });
         }
-    });
+    );
 }
 
 // ── カードランク ──────────────────────────
@@ -349,7 +391,27 @@ function updateCardRank(rank, nextRank, nextRankPoint, totalEarned) {
     $card.removeClass('membership-card--green membership-card--bronze membership-card--silver membership-card--gold');
     if (rank) $card.addClass('membership-card--' + rank);
 
+    if (_currentRank !== null && rank && (RANK_ORDER[rank] || 0) > (RANK_ORDER[_currentRank] || 0)) {
+        showRankUpAnimation(rank);
+    }
+    _currentRank = rank || _currentRank;
+
     $('#point-card-next').html(buildRankProgress(rank, nextRank, nextRankPoint, totalEarned || 0));
+}
+
+function showRankUpAnimation(rank) {
+    var $card = $('#membership-card');
+    $card.removeClass('membership-card--rank-up');
+    // force reflow to restart animation
+    void $card[0].offsetWidth;
+    $card.addClass('membership-card--rank-up');
+    setTimeout(function () { $card.removeClass('membership-card--rank-up'); }, 1000);
+
+    var label = RANK_LABELS[rank] || rank.toUpperCase();
+    $('#rank-up-toast-text').text('ランクアップ！ ' + label + ' になりました');
+    var $toast = $('#rank-up-toast');
+    $toast.addClass('is-visible');
+    setTimeout(function () { $toast.removeClass('is-visible'); }, 4500);
 }
 
 function buildRankProgress(rank, nextRank, nextRankPoint, totalEarned) {
@@ -493,28 +555,30 @@ function closeCouponModal() {
 
 function useCouponInStore() {
     if (!currentModalCoupon || currentModalCoupon.used) return;
-    if (!confirm('スタッフにこの画面をご確認いただいてから「OK」を押してください。\n使用済みにすると元に戻せません。')) return;
-
-    var apiurl = window.APP_CONFIG.apiUrl;
-    $('#modal-store-btn').prop('disabled', true).text('処理中...');
-
-    $.ajax({
-        beforeSend: function (request) {
-            request.setRequestHeader('Authorization', 'Bearer ' + _couponToken);
-        },
-        dataType: "json",
-        url: apiurl + '/coupons/' + currentModalCoupon.id + '/use',
-        type: 'post',
-        success: function () {
-            closeCouponModal();
-            showCoupons();
-        },
-        error: function (jqXHR) {
-            var msg = jqXHR.responseJSON && jqXHR.responseJSON.message || 'エラーが発生しました';
-            showErrorBanner(msg);
-            $('#modal-store-btn').prop('disabled', false).text('店舗で使用する');
+    showConfirm(
+        'スタッフにこの画面をご確認いただいてから「OK」を押してください。\n使用済みにすると元に戻せません。',
+        function () {
+            var apiurl = window.APP_CONFIG.apiUrl;
+            $('#modal-store-btn').prop('disabled', true).text('処理中...');
+            $.ajax({
+                beforeSend: function (request) {
+                    request.setRequestHeader('Authorization', 'Bearer ' + _couponToken);
+                },
+                dataType: "json",
+                url: apiurl + '/coupons/' + currentModalCoupon.id + '/use',
+                type: 'post',
+                success: function () {
+                    closeCouponModal();
+                    showCoupons();
+                },
+                error: function (jqXHR) {
+                    var msg = jqXHR.responseJSON && jqXHR.responseJSON.message || 'エラーが発生しました';
+                    showErrorBanner(msg);
+                    $('#modal-store-btn').prop('disabled', false).text('店舗で使用する');
+                }
+            });
         }
-    });
+    );
 }
 
 function useCouponMobile() {
