@@ -70,13 +70,16 @@ function initializeLiff(liffId) {
                 const accessToken = liff.getAccessToken();
                 if (accessToken) {
                     _couponToken = accessToken;
-                    showPoint(accessToken);
                     showCoupons(accessToken);
                     showRewards(accessToken);
                     var code = getParam('code');
-                    if (code) {
-                        checkCode(accessToken, code);
-                    }
+                    // showPoint 完了後に checkCode を実行する。
+                    // 並列発火すると GET /members と POST /qrcode が同時に
+                    // 新規メンバー判定し、point=0 の GET レスポンスが後から
+                    // point=100 の POST 結果を上書きするレースコンディションが発生する。
+                    showPoint(accessToken, function () {
+                        if (code) checkCode(accessToken, code);
+                    });
                 }
             }
         })
@@ -108,7 +111,7 @@ function hideLoader() {
     setTimeout(function () { $overlay.remove(); }, 450);
 }
 
-function showPoint(token) {
+function showPoint(token, onComplete) {
     var apiurl = window.APP_CONFIG.apiUrl;
     $.ajax({
         beforeSend: function (request) {
@@ -131,12 +134,14 @@ function showPoint(token) {
             } else {
                 $('#point').text('エラー');
             }
+            if (onComplete) onComplete();
         },
         error: function (jqXHR) {
             hideLoader();
             var msg = jqXHR.responseJSON && jqXHR.responseJSON.message || jqXHR.statusText || 'network error (status=' + jqXHR.status + ')';
             console.error('[API] /members error:', jqXHR.status, msg);
             showAlert(msg);
+            if (onComplete) onComplete();
         }
     });
 }
