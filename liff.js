@@ -73,6 +73,13 @@ function initializeLiff(liffId) {
                     showCoupons(accessToken);
                     showRewards(accessToken);
                     var code = getParam('code');
+                    // LIFF によっては ?code=xxx が liff.state に格納される場合があるためフォールバック
+                    if (!code) {
+                        var liffState = getParam('liff.state');
+                        if (liffState) {
+                            try { code = getParam('code', decodeURIComponent(liffState)); } catch (e) {}
+                        }
+                    }
                     // showPoint 完了後に checkCode を実行する。
                     // 並列発火すると GET /members と POST /qrcode が同時に
                     // 新規メンバー判定し、point=0 の GET レスポンスが後から
@@ -92,7 +99,15 @@ function scanQR() {
     liff
         .scanCodeV2()
         .then((result) => {
-            var code = getParam('code', result.value);
+            var value = result.value || '';
+            // URL に埋め込まれた ?code=xxx を取り出す。
+            // QR がそのまま "DL_xxx" 形式の場合も処理できるようにする。
+            var code = getParam('code', value);
+            if (!code) {
+                var m = value.match(/(?:^|[?&])code=(DL_[0-9a-f]+)/i);
+                if (!m) m = value.match(/(DL_[0-9a-f]{12})/i);
+                if (m) code = m[1];
+            }
             if (code) {
                 const accessToken = liff.getAccessToken();
                 if (accessToken) {
