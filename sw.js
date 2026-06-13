@@ -1,4 +1,4 @@
-const CACHE_NAME = 'agaruke-v14362ce';
+const CACHE_NAME = 'agaruke-v7aba63f';
 const ASSETS = [
     '/',
     '/index.html',
