@@ -509,7 +509,11 @@ function openCouponModal(coupon) {
     } else {
         $('#modal-used-note').hide();
         $('#modal-store-btn').show().prop('disabled', false).text('店舗で使用する');
-        $('#modal-mobile-btn').show();
+        if (coupon.product_url) {
+            $('#modal-mobile-btn').show();
+        } else {
+            $('#modal-mobile-btn').hide();
+        }
     }
 
     $('#coupon-modal').addClass('is-open');
@@ -587,8 +591,8 @@ function useCouponInStore() {
 }
 
 function useCouponMobile() {
-    if (!currentModalCoupon) return;
-    var url = currentModalCoupon.product_url || 'https://food-records.square.site/';
+    if (!currentModalCoupon || !currentModalCoupon.product_url) return;
+    var url = currentModalCoupon.product_url;
     if (liff.isInClient()) {
         liff.openWindow({ url: url, external: false });
     } else {
