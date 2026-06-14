@@ -130,7 +130,7 @@ main {
 .card-rank-area {
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
+    align-items: center;
     justify-content: center;
     flex-shrink: 0;
 }
@@ -151,7 +151,7 @@ main {
 .card-rank-next {
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
+    align-items: center;
     gap: 6px;
 }
 
@@ -219,7 +219,7 @@ main {
     font-size: 9.5px;
     font-weight: 400;
     color: rgba(255, 255, 255, 0.75);
-    text-align: right;
+    text-align: center;
     white-space: nowrap;
     line-height: 1.4;
 }
@@ -260,9 +260,8 @@ main {
 #point-card-get {
     font-size: 13px;
     font-weight: 700;
-    margin-top: 8px;
-    visibility: hidden;
-    display: inline-block;
+    margin-top: 4px;
+    display: none;
     background: rgba(255, 255, 255, 0.25);
     padding: 3px 12px;
     border-radius: 20px;
@@ -274,14 +273,14 @@ main {
     font-size: 10px;
     font-weight: 400;
     color: rgba(255, 255, 255, 0.65);
-    margin-top: 5px;
+    margin-top: 2px;
 }
 
 .rank-reset-note {
     font-family: 'Noto Sans JP', sans-serif;
     font-size: 9px;
     color: rgba(255, 255, 255, 0.45);
-    text-align: right;
+    text-align: center;
     white-space: nowrap;
     margin-top: 3px;
     line-height: 1.4;
