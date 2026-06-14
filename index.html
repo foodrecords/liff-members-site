@@ -62,6 +62,24 @@
                 </div>
             </div>
         </div>
+
+        <div class="procedures-section" id="procedures-section">
+            <p class="section-title">各種手続き</p>
+            <div class="procedure-list">
+                <button class="procedure-item" onclick="openTerms()">
+                    <span class="procedure-item-label">ポイントカード利用規約</span>
+                    <span class="procedure-item-arrow">›</span>
+                </button>
+                <button class="procedure-item" onclick="openFaq()">
+                    <span class="procedure-item-label">よくあるご質問</span>
+                    <span class="procedure-item-arrow">›</span>
+                </button>
+                <button class="procedure-item" onclick="openRenameDialog()">
+                    <span class="procedure-item-label">表示名の変更</span>
+                    <span class="procedure-item-arrow">›</span>
+                </button>
+            </div>
+        </div>
     </main>
 
     <div class="sticky-button">
@@ -103,6 +121,19 @@
     <div id="rank-up-toast" class="rank-up-toast">
         <div class="rank-up-toast-inner">
             <p id="rank-up-toast-text"></p>
+        </div>
+    </div>
+
+    <!-- 表示名変更ダイアログ -->
+    <div id="rename-dialog" class="custom-dialog">
+        <div class="custom-dialog-overlay" id="rename-dialog-overlay"></div>
+        <div class="custom-dialog-content">
+            <p class="custom-dialog-message">表示名の変更</p>
+            <input id="rename-input" class="rename-input" type="text" maxlength="20" placeholder="新しい表示名">
+            <div class="custom-dialog-buttons" style="margin-top:16px">
+                <button id="rename-cancel-btn" class="custom-dialog-btn custom-dialog-btn--cancel">キャンセル</button>
+                <button id="rename-ok-btn" class="custom-dialog-btn custom-dialog-btn--ok">変更する</button>
+            </div>
         </div>
     </div>
 

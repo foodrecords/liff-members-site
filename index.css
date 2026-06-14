@@ -611,6 +611,60 @@ main {
     cursor: default;
 }
 
+/* ── Procedures Section ── */
+
+.procedures-section {
+    width: 100%;
+    max-width: 360px;
+    margin-top: 28px;
+}
+
+.procedure-list {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+}
+
+.procedure-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #f0f0f0;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    color: #333;
+    cursor: pointer;
+    text-align: left;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.1s ease;
+}
+
+.procedure-item:last-child {
+    border-bottom: none;
+}
+
+.procedure-item:active {
+    background: #f5f5f5;
+}
+
+.procedure-item-label {
+    flex: 1;
+}
+
+.procedure-item-arrow {
+    font-size: 22px;
+    color: #ccc;
+    line-height: 1;
+    flex-shrink: 0;
+    margin-left: 8px;
+}
+
 /* ── Loading Overlay ── */
 
 .loading-overlay {
@@ -1170,4 +1224,22 @@ main {
 .custom-dialog-btn--ok {
     background: #388e3c;
     color: #fff;
+}
+
+.rename-input {
+    width: 100%;
+    height: 44px;
+    border: 1.5px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 0 14px;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 15px;
+    color: #333;
+    outline: none;
+    -webkit-appearance: none;
+    transition: border-color 0.15s ease;
+}
+
+.rename-input:focus {
+    border-color: #388e3c;
 }

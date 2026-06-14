@@ -702,6 +702,78 @@ function switchTab(tab) {
     }
 }
 
+// ── 各種手続き ────────────────────────────
+
+function openTerms() {
+    var url = window.APP_CONFIG.termsUrl;
+    if (!url) { showAlert('準備中です。'); return; }
+    if (liff.isInClient()) {
+        liff.openWindow({ url: url, external: true });
+    } else {
+        window.open(url, '_blank');
+    }
+}
+
+function openFaq() {
+    var url = window.APP_CONFIG.faqUrl;
+    if (!url) { showAlert('準備中です。'); return; }
+    if (liff.isInClient()) {
+        liff.openWindow({ url: url, external: true });
+    } else {
+        window.open(url, '_blank');
+    }
+}
+
+function openRenameDialog() {
+    var currentName = $('#point-card-name').text() || '';
+    var $input = $('#rename-input');
+    $input.val(currentName);
+
+    var close = function () {
+        $('#rename-dialog').removeClass('is-open');
+        $('body').removeClass('dialog-open');
+        $input.off('keydown');
+    };
+
+    $('#rename-dialog-overlay').off('click').on('click', close);
+    $('#rename-cancel-btn').off('click').on('click', close);
+    $('#rename-ok-btn').off('click').on('click', function () {
+        var newName = $input.val().trim();
+        if (!newName) { $input.focus(); return; }
+        close();
+        updateDisplayName(newName);
+    });
+    $input.off('keydown').on('keydown', function (e) {
+        if (e.key === 'Enter') $('#rename-ok-btn').trigger('click');
+    });
+
+    $('#rename-dialog').addClass('is-open');
+    $('body').addClass('dialog-open');
+    setTimeout(function () { $input.focus(); }, 200);
+}
+
+function updateDisplayName(newName) {
+    var apiurl = window.APP_CONFIG.apiUrl;
+    $.ajax({
+        beforeSend: function (request) {
+            request.setRequestHeader('Authorization', 'Bearer ' + _couponToken);
+        },
+        dataType: 'json',
+        contentType: 'application/json',
+        url: apiurl + '/members',
+        type: 'PATCH',
+        data: JSON.stringify({ name: newName }),
+        success: function () {
+            $('#point-card-name').text(newName);
+            showAlert('表示名を変更しました。');
+        },
+        error: function (jqXHR) {
+            var msg = jqXHR.responseJSON && jqXHR.responseJSON.message || 'エラーが発生しました';
+            showErrorBanner(msg);
+        }
+    });
+}
+
 // ── ユーティリティ ────────────────────────
 
 function discountHtml(coupon) {
