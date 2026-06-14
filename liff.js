@@ -5,7 +5,8 @@ var currentModalCoupon = null;
 var _couponToken = null;
 var _currentPoint = 0;
 var _currentRank = null;
-var RANK_ORDER = { green: 0, bronze: 1, silver: 2, gold: 3 };
+// secret はフロントエンド非公開。GOLD と同等に扱う。
+var RANK_ORDER = { green: 0, bronze: 1, silver: 2, gold: 3, secret: 4 };
 
 $(document).ready(function () {
     initializeLiff(window.APP_CONFIG.liffId);
@@ -403,13 +404,15 @@ function confirmExchange(reward) {
 
 // ── カードランク ──────────────────────────
 
-var RANK_LABELS = { green: 'GREEN', bronze: 'BRONZE', silver: 'SILVER', gold: 'GOLD' };
-var RANK_FLOOR  = { green: 0, bronze: 1000, silver: 3000, gold: 8000 };
+var RANK_LABELS = { green: 'GREEN', bronze: 'BRONZE', silver: 'SILVER', gold: 'GOLD', secret: 'GOLD' };
+var RANK_FLOOR  = { green: 0, bronze: 1000, silver: 3000, gold: 8000, secret: 20000 };
 
 function updateCardRank(rank, nextRank, nextRankPoint, totalEarned) {
     var $card = $('#membership-card');
     $card.removeClass('membership-card--green membership-card--bronze membership-card--silver membership-card--gold');
-    if (rank) $card.addClass('membership-card--' + rank);
+    // secret は内部ランク。CSS クラスは gold として扱う。
+    var cssRank = (rank === 'secret') ? 'gold' : rank;
+    if (cssRank) $card.addClass('membership-card--' + cssRank);
 
     if (_currentRank !== null && rank && (RANK_ORDER[rank] || 0) > (RANK_ORDER[_currentRank] || 0)) {
         showRankUpAnimation(rank);
@@ -420,6 +423,9 @@ function updateCardRank(rank, nextRank, nextRankPoint, totalEarned) {
 }
 
 function showRankUpAnimation(rank) {
+    // secret ランクはフロントエンド非公開のため通知しない
+    if (rank === 'secret') return;
+
     var $card = $('#membership-card');
     $card.removeClass('membership-card--rank-up');
     // force reflow to restart animation
@@ -437,20 +443,20 @@ function showRankUpAnimation(rank) {
 function buildRankProgress(rank, nextRank, nextRankPoint, totalEarned) {
     var r = 16;
     var circ = +(2 * Math.PI * r).toFixed(2);
-    var rankLabel = RANK_LABELS[rank] || '';
+    // secret は GOLD ラベルで表示
+    var displayRank = (rank === 'secret') ? 'gold' : rank;
+    var rankLabel = RANK_LABELS[displayRank] || '';
     var badgeHtml = rankLabel
         ? '<p class="card-rank-badge">' + rankLabel + '</p>'
         : '';
 
+    // GOLD（および非公開の secret）はチャートを表示しない
+    if (rank === 'gold' || rank === 'secret') {
+        return badgeHtml;
+    }
+
     if (!nextRank) {
-        var fullSvg = '<svg class="rank-progress-chart" viewBox="0 0 44 44">' +
-            '<circle class="rank-progress-bg" cx="22" cy="22" r="' + r + '"/>' +
-            '<circle class="rank-progress-fill" cx="22" cy="22" r="' + r + '"' +
-            ' stroke-dasharray="' + circ + ' 0"' +
-            ' transform="rotate(-90 22 22)"/>' +
-            '<text class="rank-chart-value" x="22" y="26" text-anchor="middle">MAX</text>' +
-            '</svg>';
-        return badgeHtml + fullSvg;
+        return badgeHtml;
     }
 
     var from = RANK_FLOOR[rank] || 0;
