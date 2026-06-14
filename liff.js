@@ -491,18 +491,15 @@ function buildRankProgress(rank, nextRank, nextRankPoint, totalEarned, accumulat
         '<circle class="rank-progress-fill" cx="22" cy="22" r="' + r + '"' +
         ' stroke-dasharray="' + filled + ' ' + empty + '"' +
         ' transform="rotate(-90 22 22)"/>' +
+        '<text class="rank-chart-current" x="22" y="21" text-anchor="middle">' + current + '</text>' +
+        '<text class="rank-chart-total" x="22" y="30" text-anchor="middle">/' + total + '</text>' +
         '</svg>';
-
-    var fractionHtml = '<p class="rank-progress-fraction">' +
-        current.toLocaleString() +
-        '<span>/' + total.toLocaleString() + '</span>' +
-        '</p>';
 
     var nextRankHtml = '<span class="rank-next-name rank-next-name--' + nextRank + '">' +
         RANK_LABELS[nextRank] + '</span>';
     var labelHtml = '<p class="rank-progress-label">あと' + nextRankPoint + 'ptで' + nextRankHtml + '</p>';
 
-    return badgeHtml + svgHtml + fractionHtml + labelHtml + resetNoteHtml;
+    return badgeHtml + svgHtml + labelHtml + resetNoteHtml;
 }
 
 // ── モーダル ──────────────────────────────
