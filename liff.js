@@ -144,12 +144,18 @@ function showPoint(token, onComplete) {
                 $('#point-card-number span').text(data.data.number);
                 $('#point-card-name').text(data.data.name || '');
 
-                // ポイント失効予定
+                // ポイント失効予定（残り3か月以内のみ表示）
                 if (data.data.next_point_expiry) {
                     var exp = data.data.next_point_expiry;
                     var ed = new Date(exp.expires_at);
-                    var edStr = ed.getFullYear() + '/' + (ed.getMonth() + 1) + '/' + ed.getDate();
-                    $('#point-card-expiry').text(exp.amount + 'pt が ' + edStr + ' に失効予定').show();
+                    var threshold = new Date();
+                    threshold.setMonth(threshold.getMonth() + 3);
+                    if (ed <= threshold) {
+                        var edStr = ed.getFullYear() + '/' + (ed.getMonth() + 1) + '/' + ed.getDate();
+                        $('#point-card-expiry').text(exp.amount + 'pt が ' + edStr + ' に失効予定').show();
+                    } else {
+                        $('#point-card-expiry').hide();
+                    }
                 } else {
                     $('#point-card-expiry').hide();
                 }
