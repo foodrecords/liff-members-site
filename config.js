@@ -5,4 +5,5 @@ window.APP_CONFIG = {
   // apiUrl: "http://localhost:9090", // test
   termsUrl: "",
   faqUrl: "",
+  privacyPolicyUrl: "https://food-records.com/privacy-policy/",
 };

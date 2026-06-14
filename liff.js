@@ -714,6 +714,16 @@ function openTerms() {
     }
 }
 
+function openPrivacyPolicy() {
+    var url = window.APP_CONFIG.privacyPolicyUrl;
+    if (!url) { showAlert('準備中です。'); return; }
+    if (liff.isInClient()) {
+        liff.openWindow({ url: url, external: true });
+    } else {
+        window.open(url, '_blank');
+    }
+}
+
 function openFaq() {
     var url = window.APP_CONFIG.faqUrl;
     if (!url) { showAlert('準備中です。'); return; }
