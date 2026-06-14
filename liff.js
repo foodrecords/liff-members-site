@@ -5,6 +5,7 @@ var currentModalCoupon = null;
 var _couponToken = null;
 var _currentPoint = 0;
 var _currentRank = null;
+var _accumulatedResetAt = null;
 // secret はフロントエンド非公開。GOLD と同等に扱う。
 var RANK_ORDER = { green: 0, bronze: 1, silver: 2, gold: 3, secret: 4 };
 
@@ -142,6 +143,18 @@ function showPoint(token, onComplete) {
                 $('#point-card-balance span').text(data.data.point);
                 $('#point-card-number span').text(data.data.number);
                 $('#point-card-name').text(data.data.name || '');
+
+                // ポイント失効予定
+                if (data.data.next_point_expiry) {
+                    var exp = data.data.next_point_expiry;
+                    var ed = new Date(exp.expires_at);
+                    var edStr = ed.getFullYear() + '/' + (ed.getMonth() + 1) + '/' + ed.getDate();
+                    $('#point-card-expiry').text(exp.amount + 'pt が ' + edStr + ' に失効予定').show();
+                } else {
+                    $('#point-card-expiry').hide();
+                }
+
+                _accumulatedResetAt = data.data.accumulated_reset_at || null;
                 updateCardRank(data.data.rank, data.data.next_rank, data.data.next_rank_point, data.data.total_earned_point);
                 refreshRewardButtons();
                 if (data.data.is_new_member) {
@@ -419,7 +432,7 @@ function updateCardRank(rank, nextRank, nextRankPoint, totalEarned) {
     }
     _currentRank = rank || _currentRank;
 
-    $('#point-card-next').html(buildRankProgress(rank, nextRank, nextRankPoint, totalEarned || 0));
+    $('#point-card-next').html(buildRankProgress(rank, nextRank, nextRankPoint, totalEarned || 0, _accumulatedResetAt));
 }
 
 function showRankUpAnimation(rank) {
@@ -440,7 +453,7 @@ function showRankUpAnimation(rank) {
     setTimeout(function () { $toast.removeClass('is-visible'); }, 4500);
 }
 
-function buildRankProgress(rank, nextRank, nextRankPoint, totalEarned) {
+function buildRankProgress(rank, nextRank, nextRankPoint, totalEarned, accumulatedResetAt) {
     var r = 16;
     var circ = +(2 * Math.PI * r).toFixed(2);
     // secret は GOLD ラベルで表示
@@ -450,13 +463,20 @@ function buildRankProgress(rank, nextRank, nextRankPoint, totalEarned) {
         ? '<p class="card-rank-badge">' + rankLabel + '</p>'
         : '';
 
+    var resetNoteHtml = '';
+    if (accumulatedResetAt) {
+        var rd = new Date(accumulatedResetAt);
+        var rdStr = rd.getFullYear() + '/' + (rd.getMonth() + 1) + '/' + rd.getDate();
+        resetNoteHtml = '<p class="rank-reset-note">累積 ' + rdStr + ' にリセット予定</p>';
+    }
+
     // GOLD（および非公開の secret）はチャートを表示しない
     if (rank === 'gold' || rank === 'secret') {
-        return badgeHtml;
+        return badgeHtml + resetNoteHtml;
     }
 
     if (!nextRank) {
-        return badgeHtml;
+        return badgeHtml + resetNoteHtml;
     }
 
     var from = RANK_FLOOR[rank] || 0;
@@ -482,7 +502,7 @@ function buildRankProgress(rank, nextRank, nextRankPoint, totalEarned) {
         RANK_LABELS[nextRank] + '</span>';
     var labelHtml = '<p class="rank-progress-label">あと' + nextRankPoint + 'ptで' + nextRankHtml + '</p>';
 
-    return badgeHtml + svgHtml + fractionHtml + labelHtml;
+    return badgeHtml + svgHtml + fractionHtml + labelHtml + resetNoteHtml;
 }
 
 // ── モーダル ──────────────────────────────
