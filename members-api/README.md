@@ -107,13 +107,13 @@ ngrok http 8080
 
 ```bash
 # イメージをビルドして push
-docker build -f etc/docker/api/Dockerfile.prod -t gcr.io/food-records-prod/members-api .
-docker push gcr.io/food-records-prod/members-api
+docker build -f etc/docker/api/Dockerfile.prod -t gcr.io/fr-agaruke/members-api .
+docker push gcr.io/fr-agaruke/members-api
 
 # Cloud Run にデプロイ
 gcloud run deploy members-api \
   --platform managed \
-  --image gcr.io/food-records-prod/members-api \
+  --image gcr.io/fr-agaruke/members-api \
   --region us-central1 \
   --allow-unauthenticated \
   --set-env-vars PROJECT_ID=fr-agaruke
