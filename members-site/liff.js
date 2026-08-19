@@ -75,11 +75,16 @@ function initializeLiff(liffId) {
                     showCoupons(accessToken);
                     showRewards(accessToken);
                     var code = getParam('code');
+                    var kioskToken = getParam('kiosk_token');
                     // LIFF によっては ?code=xxx が liff.state に格納される場合があるためフォールバック
-                    if (!code) {
+                    if (!code || !kioskToken) {
                         var liffState = getParam('liff.state');
                         if (liffState) {
-                            try { code = getParam('code', decodeURIComponent(liffState)); } catch (e) {}
+                            try {
+                                var decodedState = decodeURIComponent(liffState);
+                                if (!code) code = getParam('code', decodedState);
+                                if (!kioskToken) kioskToken = getParam('kiosk_token', decodedState);
+                            } catch (e) {}
                         }
                     }
                     // showPoint 完了後に checkCode を実行する。
@@ -87,7 +92,8 @@ function initializeLiff(liffId) {
                     // 新規メンバー判定し、point=0 の GET レスポンスが後から
                     // point=100 の POST 結果を上書きするレースコンディションが発生する。
                     showPoint(accessToken, function () {
-                        if (code) checkCode(accessToken, code);
+                        if (kioskToken) linkKioskCheckout(kioskToken);
+                        else if (code) checkCode(accessToken, code);
                     });
                 }
             }
@@ -104,6 +110,11 @@ function scanQR() {
             var value = result.value || '';
             if (value.indexOf('AGARUKE_KIOSK:') === 0) {
                 linkKioskCheckout(value.substring('AGARUKE_KIOSK:'.length));
+                return;
+            }
+            var kioskToken = getParam('kiosk_token', value);
+            if (kioskToken) {
+                linkKioskCheckout(kioskToken);
                 return;
             }
             // URL に埋め込まれた ?code=xxx を取り出す。

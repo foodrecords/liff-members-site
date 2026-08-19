@@ -32,7 +32,7 @@ window.APP_CONFIG = {
 LIFF は LINE アプリ内でしか動作しないため、動作確認は LINE アプリから LIFF URL を開く。
 URL に `?code=XXXXXXXX` を付与することで QRスキャンを省略できる。
 
-既存の「QRコードを読み取る」は通常のポイントQRに加えて、Kioskが表示する`AGARUKE_KIOSK:`形式の連携QRにも対応する。連携QRの場合はポイントを即時付与せず、LINE会員を現在の会計へ紐づける。
+既存の「QRコードを読み取る」は通常のポイントQRに加えて、Kioskが表示するLIFF URL形式の連携QRにも対応する。スマートフォン標準カメラから読み取った場合もLIFFを起動し、`kiosk_token`を使ってLINE会員を現在の会計へ紐づける。旧`AGARUKE_KIOSK:`形式も互換性のため読み取れる。
 
 ## デプロイ
 
