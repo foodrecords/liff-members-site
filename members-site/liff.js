@@ -245,15 +245,19 @@ function refreshPointBalance() {
     }
     var $button = $('#refresh-point-balance');
     $button.prop('disabled', true).text('更新中...');
-    showPoint(token, function () {
-        $button.prop('disabled', false).html('<i class="fa fa-refresh" aria-hidden="true"></i> ポイント残高を更新');
-    });
+    var remaining = 2;
+    var complete = function () {
+        remaining -= 1;
+        if (remaining === 0) $button.prop('disabled', false).html('<i class="fa fa-refresh" aria-hidden="true"></i> ポイント残高を更新');
+    };
+    showPoint(token, complete);
+    showCoupons(token).always(complete);
 }
 
 function checkCode(token, code) {
     _couponToken = token;
     var apiurl = window.APP_CONFIG.apiUrl;
-    $.ajax({
+    return $.ajax({
         beforeSend: function (request) {
             request.setRequestHeader('Authorization', 'Bearer ' + token);
         },
@@ -291,7 +295,7 @@ function checkCode(token, code) {
 function showCoupons(token) {
     if (token) _couponToken = token;
     var apiurl = window.APP_CONFIG.apiUrl;
-    $.ajax({
+    return $.ajax({
         beforeSend: function (request) {
             request.setRequestHeader('Authorization', 'Bearer ' + _couponToken);
         },
