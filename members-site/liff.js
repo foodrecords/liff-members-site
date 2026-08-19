@@ -6,6 +6,7 @@ var _couponToken = null;
 var _currentPoint = 0;
 var _currentRank = null;
 var _accumulatedResetAt = null;
+var LINKED_KIOSK_TOKEN_KEY = 'agaruke_linked_kiosk_token';
 // secret はフロントエンド非公開。GOLD と同等に扱う。
 var RANK_ORDER = { green: 0, bronze: 1, silver: 2, gold: 3, secret: 4 };
 
@@ -92,7 +93,7 @@ function initializeLiff(liffId) {
                     // 新規メンバー判定し、point=0 の GET レスポンスが後から
                     // point=100 の POST 結果を上書きするレースコンディションが発生する。
                     showPoint(accessToken, function () {
-                        if (kioskToken) linkKioskCheckout(kioskToken);
+                        if (kioskToken && !wasKioskTokenLinked(kioskToken)) linkKioskCheckout(kioskToken);
                         else if (code) checkCode(accessToken, code);
                     });
                 }
@@ -149,9 +150,32 @@ function linkKioskCheckout(token) {
         url: window.APP_CONFIG.apiUrl + '/kiosk/checkouts/link',
         type: 'post',
         data: JSON.stringify({ token: token }),
-        success: function () { showAlert('セルフレジにポイントカードを連携しました。'); },
+        success: function () {
+            rememberLinkedKioskToken(token);
+            removeKioskTokenFromUrl();
+            showAlert('セルフレジにポイントカードを連携しました。');
+        },
         error: function (jqXHR) { var msg = jqXHR.responseJSON && jqXHR.responseJSON.message || 'QRコードの有効期限が切れています。'; showAlert(msg); }
     });
+}
+
+function wasKioskTokenLinked(token) {
+    try { return window.sessionStorage.getItem(LINKED_KIOSK_TOKEN_KEY) === token; }
+    catch (e) { return false; }
+}
+
+function rememberLinkedKioskToken(token) {
+    try { window.sessionStorage.setItem(LINKED_KIOSK_TOKEN_KEY, token); }
+    catch (e) {}
+}
+
+function removeKioskTokenFromUrl() {
+    try {
+        var url = new URL(window.location.href);
+        url.searchParams.delete('kiosk_token');
+        url.searchParams.delete('liff.state');
+        window.history.replaceState({}, document.title, url.pathname + url.search + url.hash);
+    } catch (e) {}
 }
 
 function hideLoader() {
@@ -210,6 +234,19 @@ function showPoint(token, onComplete) {
             showAlert(msg);
             if (onComplete) onComplete();
         }
+    });
+}
+
+function refreshPointBalance() {
+    var token = _couponToken || liff.getAccessToken();
+    if (!token) {
+        showAlert('LINEログインを確認してください。');
+        return;
+    }
+    var $button = $('#refresh-point-balance');
+    $button.prop('disabled', true).text('更新中...');
+    showPoint(token, function () {
+        $button.prop('disabled', false).html('<i class="fa fa-refresh" aria-hidden="true"></i> ポイント残高を更新');
     });
 }
 
