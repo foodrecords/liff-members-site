@@ -1,0 +1,24 @@
+{
+  "name": "square-session",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/main.js",
+    "dev": "ts-node src/main.ts",
+    "login:manual": "GCS_BUCKET=fr-agaruke-square-session ts-node src/manual.ts",
+    "fill-pool": "ts-node src/fill-pool.ts"
+  },
+  "dependencies": {
+    "@google-cloud/firestore": "^7.11.6",
+    "@google-cloud/storage": "^7.0.0",
+    "playwright": "1.48.0",
+    "playwright-extra": "^4.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.0.0"
+  }
+}

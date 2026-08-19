@@ -1,0 +1,11 @@
+FROM golang:1.24-alpine
+
+WORKDIR /go/src/github.com/foodrecords/members-api
+
+RUN apk add --no-cache alpine-sdk git
+RUN apk add openssh
+RUN go install github.com/cespare/reflex@latest
+
+EXPOSE 8080
+
+CMD reflex -r '(\.go$|go\.mod)' -s go run ./cmd/api/

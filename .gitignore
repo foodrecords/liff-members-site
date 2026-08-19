@@ -1,3 +1,26 @@
-.vscode/
 .DS_Store
 .env
+.env.*
+!.env.example
+.vscode/
+
+# Credentials
+key.json
+key.json.*
+key.*.json
+*.pem
+id_rsa
+
+# Build products and dependencies
+node_modules/
+dist/
+coverage/
+vendor/
+*.test
+*.out
+
+# Local tooling
+.claude/
+.gitconfig
+dump.sql
+members-api/devserver

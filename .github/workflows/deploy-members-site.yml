@@ -1,0 +1,47 @@
+name: Deploy members site to GitHub Pages
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "members-site/**"
+      - ".github/workflows/deploy-members-site.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare static site
+        run: |
+          mkdir .pages-site
+          rsync -a \
+            --exclude='.env' \
+            --exclude='.env.*' \
+            --exclude='.gitignore' \
+            --exclude='README.md' \
+            members-site/ .pages-site/
+          SHORT_SHA="${GITHUB_SHA::7}"
+          sed -i "s/const CACHE_NAME = 'agaruke-v[^']*'/const CACHE_NAME = 'agaruke-v${SHORT_SHA}'/" .pages-site/sw.js
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .pages-site
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

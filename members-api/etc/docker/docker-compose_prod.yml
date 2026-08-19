@@ -1,0 +1,12 @@
+version: '3.5'
+
+services:
+  members-api:
+    container_name: members-api
+    env_file: .env
+    build:
+      context: ../../
+      dockerfile: etc/docker/api/Dockerfile.prod
+    volumes:
+      - ../../:/go/src/github.com/foodrecords/members-api:delegated
+    image: gcr.io/fr-agaruke/members-api

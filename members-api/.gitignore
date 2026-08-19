@@ -1,0 +1,11 @@
+testdata/db.json
+.vscode/
+vendor/
+.DS_Store
+.env
+dump.sql
+key.json
+key.json.*
+key.*.json
+.gitconfig
+id_rsa

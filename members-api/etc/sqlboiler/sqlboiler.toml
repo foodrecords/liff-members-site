@@ -1,0 +1,12 @@
+output = "pkg/entity"
+pkgname = "entity"
+wipe = true
+no-tests = true
+
+[mysql]
+dbname = "foodrecords"
+host = "localhost"
+port = 3308
+user = "user"
+pass = "password"
+sslmode = "false"

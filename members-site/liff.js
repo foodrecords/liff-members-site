@@ -102,6 +102,10 @@ function scanQR() {
         .scanCodeV2()
         .then((result) => {
             var value = result.value || '';
+            if (value.indexOf('AGARUKE_KIOSK:') === 0) {
+                linkKioskCheckout(value.substring('AGARUKE_KIOSK:'.length));
+                return;
+            }
             // URL に埋め込まれた ?code=xxx を取り出す。
             // QR がそのまま "DL_xxx" 形式の場合も処理できるようにする。
             var code = getParam('code', value);
@@ -120,6 +124,23 @@ function scanQR() {
         .catch((err) => {
             console.log(err);
         });
+}
+
+function linkKioskCheckout(token) {
+    var accessToken = liff.getAccessToken();
+    if (!accessToken) { showAlert('LINEログインを確認してください。'); return; }
+    $.ajax({
+        beforeSend: function (request) {
+            request.setRequestHeader('Authorization', 'Bearer ' + accessToken);
+        },
+        dataType: 'json',
+        contentType: 'application/json',
+        url: window.APP_CONFIG.apiUrl + '/kiosk/checkouts/link',
+        type: 'post',
+        data: JSON.stringify({ token: token }),
+        success: function () { showAlert('セルフレジにポイントカードを連携しました。'); },
+        error: function (jqXHR) { var msg = jqXHR.responseJSON && jqXHR.responseJSON.message || 'QRコードの有効期限が切れています。'; showAlert(msg); }
+    });
 }
 
 function hideLoader() {

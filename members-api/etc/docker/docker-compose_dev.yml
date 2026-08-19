@@ -1,0 +1,15 @@
+version: '3.5'
+
+services:
+  members-api-dev:
+    container_name: members-api-dev
+    env_file: .env
+    environment:
+      - VOLUME_PATH=/go/src/github.com/foodrecords/members-api
+    build:
+      context: ../../
+      dockerfile: etc/docker/api/Dockerfile.dev
+    ports:
+      - 9090:8080
+    volumes:
+      - ../../:/go/src/github.com/foodrecords/members-api:delegated

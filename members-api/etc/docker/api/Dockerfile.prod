@@ -1,0 +1,20 @@
+# syntax=docker/dockerfile:1
+
+FROM golang:1.24-alpine AS builder
+
+WORKDIR /go/src/github.com/foodrecords/members-api
+COPY go.mod go.sum ./
+
+RUN apk add --update --no-cache ca-certificates git
+RUN apk add openssh
+
+RUN go mod download
+
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -o /go/bin/api ./cmd/api
+
+FROM scratch
+COPY --from=builder /go/bin/api /go/bin/api
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+EXPOSE 8080
+ENTRYPOINT ["/go/bin/api"]
