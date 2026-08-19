@@ -221,6 +221,7 @@ function showPoint(token, onComplete) {
                 refreshRewardButtons();
                 if (data.data.is_new_member) {
                     showWelcomeToast();
+                    showCoupons(token);
                 }
             } else {
                 $('#point').text('エラー');
