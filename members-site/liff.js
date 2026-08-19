@@ -73,7 +73,6 @@ function initializeLiff(liffId) {
                 const accessToken = liff.getAccessToken();
                 if (accessToken) {
                     _couponToken = accessToken;
-                    showCoupons(accessToken);
                     showRewards(accessToken);
                     var code = getParam('code');
                     var kioskToken = getParam('kiosk_token');
@@ -93,6 +92,7 @@ function initializeLiff(liffId) {
                     // 新規メンバー判定し、point=0 の GET レスポンスが後から
                     // point=100 の POST 結果を上書きするレースコンディションが発生する。
                     showPoint(accessToken, function () {
+                        showCoupons(accessToken);
                         if (kioskToken && !wasKioskTokenLinked(kioskToken)) linkKioskCheckout(kioskToken);
                         else if (code) checkCode(accessToken, code);
                     });
@@ -861,6 +861,7 @@ function updateDisplayName(newName) {
 
 function discountHtml(coupon) {
     var label = coupon.discount_label
+        || (coupon.max_unit_price > 0 ? coupon.max_unit_price.toLocaleString() + '円以下の' + (coupon.target_type === 'item' ? '商品' : '商品・オプション') + '無料' : '')
         || (coupon.discount_amount > 0 ? '¥' + coupon.discount_amount.toLocaleString() + ' OFF' : '');
     return label ? '<span class="coupon-card-discount">' + label + '</span>' : '';
 }

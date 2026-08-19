@@ -1,8 +1,8 @@
 package coupon
 
 import (
-	"io"
 	"encoding/json"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -28,6 +28,11 @@ type memberCouponDoc struct {
 	UsedAt         time.Time `firestore:"used_at"`
 	ProductURL     string    `firestore:"product_url"`
 	ImageURL       string    `firestore:"image_url"`
+	BenefitType    string    `firestore:"benefit_type"`
+	TargetType     string    `firestore:"target_type"`
+	MaxUnitPrice   int       `firestore:"max_unit_price"`
+	FreeQuantity   int       `firestore:"free_quantity"`
+	Status         string    `firestore:"status"`
 }
 
 type CouponResp struct {
@@ -46,6 +51,11 @@ type CouponResp struct {
 	UsedAt         string `json:"used_at,omitempty"`
 	ProductURL     string `json:"product_url,omitempty"`
 	ImageURL       string `json:"image_url,omitempty"`
+	BenefitType    string `json:"benefit_type,omitempty"`
+	TargetType     string `json:"target_type,omitempty"`
+	MaxUnitPrice   int    `json:"max_unit_price,omitempty"`
+	FreeQuantity   int    `json:"free_quantity,omitempty"`
+	Status         string `json:"status,omitempty"`
 }
 
 type GetResp struct {
@@ -95,6 +105,11 @@ func (h handler) Get(w http.ResponseWriter, r *http.Request) {
 			Used:           c.Used,
 			ProductURL:     c.ProductURL,
 			ImageURL:       c.ImageURL,
+			BenefitType:    c.BenefitType,
+			TargetType:     c.TargetType,
+			MaxUnitPrice:   c.MaxUnitPrice,
+			FreeQuantity:   c.FreeQuantity,
+			Status:         c.Status,
 		}
 		if !c.ExpiresAt.IsZero() {
 			resp.ExpiresAt = c.ExpiresAt.Format(time.RFC3339)

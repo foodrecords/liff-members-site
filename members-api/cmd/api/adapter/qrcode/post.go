@@ -59,16 +59,25 @@ type userScanDoc struct {
 }
 
 type couponDoc struct {
-	Title              string    `firestore:"title"`
-	Description        string    `firestore:"description"`
-	ImageURL           string    `firestore:"image_url"`
-	RewardID           string    `firestore:"reward_id"`
-	PointCost          int       `firestore:"point_cost"`
-	IssuedAt           time.Time `firestore:"issued_at"`
-	ExpiresAt          time.Time `firestore:"expires_at"`
-	Used               bool      `firestore:"used"`
-	SquareDiscountCode string    `firestore:"square_discount_code,omitempty"`
-	ProductURL         string    `firestore:"product_url,omitempty"`
+	Title               string    `firestore:"title"`
+	Description         string    `firestore:"description"`
+	ImageURL            string    `firestore:"image_url"`
+	RewardID            string    `firestore:"reward_id"`
+	PointCost           int       `firestore:"point_cost"`
+	IssuedAt            time.Time `firestore:"issued_at"`
+	ExpiresAt           time.Time `firestore:"expires_at"`
+	Used                bool      `firestore:"used"`
+	SquareDiscountCode  string    `firestore:"square_discount_code,omitempty"`
+	ProductURL          string    `firestore:"product_url,omitempty"`
+	BenefitType         string    `firestore:"benefit_type"`
+	TargetType          string    `firestore:"target_type"`
+	MaxUnitPrice        int       `firestore:"max_unit_price"`
+	FreeQuantity        int       `firestore:"free_quantity"`
+	EligibleStoreIDs    []string  `firestore:"eligible_store_ids"`
+	EligibleCategoryIDs []string  `firestore:"eligible_category_ids"`
+	EligibleItemIDs     []string  `firestore:"eligible_item_ids"`
+	EligibleOptionIDs   []string  `firestore:"eligible_option_ids"`
+	Status              string    `firestore:"status"`
 }
 
 type pointLogDoc struct {
@@ -81,12 +90,20 @@ type pointLogDoc struct {
 }
 
 type welcomeRewardCatalogDoc struct {
-	Title          string `firestore:"title"`
-	Description    string `firestore:"description"`
-	ImageURL       string `firestore:"image_url"`
-	RequiredPoints int    `firestore:"required_points"`
-	PricingRuleID  string `firestore:"pricing_rule_id"`
-	SquareItemID   string `firestore:"square_item_id"`
+	Title               string   `firestore:"title"`
+	Description         string   `firestore:"description"`
+	ImageURL            string   `firestore:"image_url"`
+	RequiredPoints      int      `firestore:"required_points"`
+	PricingRuleID       string   `firestore:"pricing_rule_id"`
+	SquareItemID        string   `firestore:"square_item_id"`
+	BenefitType         string   `firestore:"benefit_type"`
+	TargetType          string   `firestore:"target_type"`
+	MaxUnitPrice        int      `firestore:"max_unit_price"`
+	FreeQuantity        int      `firestore:"free_quantity"`
+	EligibleStoreIDs    []string `firestore:"eligible_store_ids"`
+	EligibleCategoryIDs []string `firestore:"eligible_category_ids"`
+	EligibleItemIDs     []string `firestore:"eligible_item_ids"`
+	EligibleOptionIDs   []string `firestore:"eligible_option_ids"`
 }
 
 const (
@@ -149,16 +166,25 @@ func addWelcomeCoupon(ctx context.Context, fs *firestore.Client, pool *square.Po
 
 	now := time.Now()
 	batch.Set(memberRef.Collection("coupons").NewDoc(), couponDoc{
-		Title:              best.Title,
-		Description:        best.Description,
-		ImageURL:           best.ImageURL,
-		RewardID:           bestSnap.Ref.ID,
-		PointCost:          0,
-		IssuedAt:           now,
-		ExpiresAt:          now.AddDate(0, 3, 0),
-		Used:               false,
-		SquareDiscountCode: squareCode,
-		ProductURL:         productURL,
+		Title:               best.Title,
+		Description:         best.Description,
+		ImageURL:            best.ImageURL,
+		RewardID:            bestSnap.Ref.ID,
+		PointCost:           0,
+		IssuedAt:            now,
+		ExpiresAt:           now.AddDate(0, 3, 0),
+		Used:                false,
+		SquareDiscountCode:  squareCode,
+		ProductURL:          productURL,
+		BenefitType:         best.BenefitType,
+		TargetType:          best.TargetType,
+		MaxUnitPrice:        best.MaxUnitPrice,
+		FreeQuantity:        best.FreeQuantity,
+		EligibleStoreIDs:    best.EligibleStoreIDs,
+		EligibleCategoryIDs: best.EligibleCategoryIDs,
+		EligibleItemIDs:     best.EligibleItemIDs,
+		EligibleOptionIDs:   best.EligibleOptionIDs,
+		Status:              "available",
 	})
 }
 
