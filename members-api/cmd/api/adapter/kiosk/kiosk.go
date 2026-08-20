@@ -22,7 +22,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-const tokenLifetime = 2 * time.Minute
+const tokenLifetime = 5 * time.Minute
 const reservationLifetime = 10 * time.Minute
 
 type memberTokenDoc struct {
