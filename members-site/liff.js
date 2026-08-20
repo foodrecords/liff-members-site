@@ -155,7 +155,13 @@ function linkKioskCheckout(token) {
             removeKioskTokenFromUrl();
             showAlert('セルフレジにポイントカードを連携しました。');
         },
-        error: function (jqXHR) { var msg = jqXHR.responseJSON && jqXHR.responseJSON.message || 'QRコードの有効期限が切れています。'; showAlert(msg); }
+        error: function (jqXHR) {
+            var code = jqXHR.responseJSON && jqXHR.responseJSON.message || '';
+            var msg = /(?:KIOSK_)?TOKEN_EXPIRED/.test(code)
+                ? 'このQRコードは期限切れです。セルフレジに表示されている最新のQRコードを、もう一度読み込んでください。'
+                : code || 'ポイントカードを連携できませんでした。セルフレジのQRコードを、もう一度読み込んでください。';
+            showAlert(msg);
+        }
     });
 }
 
