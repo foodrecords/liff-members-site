@@ -128,7 +128,7 @@ func shouldReset(m memberDoc) bool {
 }
 
 func addWelcomeCoupon(ctx context.Context, fs *firestore.Client, pool *square.Pool, userID string, batch *firestore.WriteBatch, memberRef *firestore.DocumentRef) {
-	docs, err := fs.Collection("reward_catalog").Where("active", "==", true).Documents(ctx).GetAll()
+	docs, err := config.DataCollection(fs, "reward_catalog").Where("active", "==", true).Documents(ctx).GetAll()
 	if err != nil {
 		logger.Error("welcome coupon: " + err.Error())
 		return
@@ -215,7 +215,7 @@ func (h handler) Post(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	serialSnap, err := h.fs.Collection("serials").Doc(body.Code).Get(ctx)
+	serialSnap, err := config.DataCollection(h.fs, "serials").Doc(body.Code).Get(ctx)
 	if err != nil {
 		if status.Code(err) == codes.NotFound {
 			presenter.BadRequest(w, "シリアルナンバーが見つかりません")
@@ -260,7 +260,7 @@ func (h handler) Post(w http.ResponseWriter, r *http.Request) {
 
 	accumulate := serialAccumulate(s)
 	now := time.Now()
-	memberRef := h.fs.Collection("members").Doc(prof.UserID)
+	memberRef := config.DataCollection(h.fs, "members").Doc(prof.UserID)
 	memberSnap, err := memberRef.Get(ctx)
 	if err != nil && status.Code(err) != codes.NotFound {
 		logger.Error(err.Error())
@@ -322,12 +322,12 @@ func (h handler) Post(w http.ResponseWriter, r *http.Request) {
 			m.LastAccumulatedAt = now
 		}
 		batch.Set(memberRef, m)
-		batch.Set(h.fs.Collection("member_numbers").Doc(fmt.Sprintf("%06d", memberNumber)), map[string]interface{}{"user_id": prof.UserID})
+		batch.Set(config.DataCollection(h.fs, "member_numbers").Doc(fmt.Sprintf("%06d", memberNumber)), map[string]interface{}{"user_id": prof.UserID})
 		addWelcomeCoupon(ctx, h.fs, h.pool, prof.UserID, batch, memberRef)
 	}
 
 	if body.Code != "FR1234567890" {
-		batch.Update(h.fs.Collection("serials").Doc(body.Code), []firestore.Update{
+		batch.Update(config.DataCollection(h.fs, "serials").Doc(body.Code), []firestore.Update{
 			{Path: "used", Value: true},
 			{Path: "used_id", Value: fmt.Sprintf("%06d", memberNumber)},
 		})
@@ -365,7 +365,7 @@ func (h handler) postDailyCheckin(ctx context.Context, w http.ResponseWriter, pr
 	today := time.Now().In(jst).Format("2006-01-02")
 	now := time.Now()
 
-	memberRef := h.fs.Collection("members").Doc(prof.UserID)
+	memberRef := config.DataCollection(h.fs, "members").Doc(prof.UserID)
 	memberSnap, err := memberRef.Get(ctx)
 	if err != nil && status.Code(err) != codes.NotFound {
 		logger.Error(err.Error())
@@ -418,7 +418,7 @@ func (h handler) postDailyCheckin(ctx context.Context, w http.ResponseWriter, pr
 			LastCheckinDate:   today,
 			LastAccumulatedAt: now,
 		})
-		batch.Set(h.fs.Collection("member_numbers").Doc(fmt.Sprintf("%06d", memberNumber)), map[string]interface{}{"user_id": prof.UserID})
+		batch.Set(config.DataCollection(h.fs, "member_numbers").Doc(fmt.Sprintf("%06d", memberNumber)), map[string]interface{}{"user_id": prof.UserID})
 		addWelcomeCoupon(ctx, h.fs, h.pool, prof.UserID, batch, memberRef)
 	}
 
@@ -449,7 +449,7 @@ func (h handler) postDailyCheckin(ctx context.Context, w http.ResponseWriter, pr
 }
 
 func (h handler) postRecurringSerial(ctx context.Context, w http.ResponseWriter, code string, point int, accumulate bool, prof *GetProfileResp) {
-	scanRef := h.fs.Collection("serials").Doc(code).Collection("user_scans").Doc(prof.UserID)
+	scanRef := config.DataCollection(h.fs, "serials").Doc(code).Collection("user_scans").Doc(prof.UserID)
 	scanSnap, err := scanRef.Get(ctx)
 	if err != nil && status.Code(err) != codes.NotFound {
 		logger.Error(err.Error())
@@ -471,7 +471,7 @@ func (h handler) postRecurringSerial(ctx context.Context, w http.ResponseWriter,
 	}
 
 	now := time.Now()
-	memberRef := h.fs.Collection("members").Doc(prof.UserID)
+	memberRef := config.DataCollection(h.fs, "members").Doc(prof.UserID)
 	memberSnap, err := memberRef.Get(ctx)
 	if err != nil && status.Code(err) != codes.NotFound {
 		logger.Error(err.Error())
@@ -532,7 +532,7 @@ func (h handler) postRecurringSerial(ctx context.Context, w http.ResponseWriter,
 			m.LastAccumulatedAt = now
 		}
 		batch.Set(memberRef, m)
-		batch.Set(h.fs.Collection("member_numbers").Doc(fmt.Sprintf("%06d", memberNumber)), map[string]interface{}{"user_id": prof.UserID})
+		batch.Set(config.DataCollection(h.fs, "member_numbers").Doc(fmt.Sprintf("%06d", memberNumber)), map[string]interface{}{"user_id": prof.UserID})
 		addWelcomeCoupon(ctx, h.fs, h.pool, prof.UserID, batch, memberRef)
 	}
 
@@ -578,7 +578,7 @@ func generateUniqueNumber(ctx context.Context, fs *firestore.Client) (int64, err
 	ra := rand.New(rand.NewSource(time.Now().UnixNano()))
 	for {
 		n := int64(ra.Int31n(1000000))
-		doc, err := fs.Collection("member_numbers").Doc(fmt.Sprintf("%06d", n)).Get(ctx)
+		doc, err := config.DataCollection(fs, "member_numbers").Doc(fmt.Sprintf("%06d", n)).Get(ctx)
 		if err != nil {
 			if status.Code(err) == codes.NotFound {
 				return n, nil

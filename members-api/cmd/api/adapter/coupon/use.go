@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/firestore"
+	"github.com/foodrecords/members-api/pkg/config"
 	"github.com/foodrecords/members-api/pkg/logger"
 	"github.com/foodrecords/members-api/pkg/presenter"
 	"github.com/go-chi/chi"
@@ -25,7 +26,7 @@ func (h handler) Use(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	couponRef := h.fs.Collection("members").Doc(prof.UserID).Collection("coupons").Doc(id)
+	couponRef := config.DataCollection(h.fs, "members").Doc(prof.UserID).Collection("coupons").Doc(id)
 	snap, err := couponRef.Get(ctx)
 	if err != nil {
 		if status.Code(err) == codes.NotFound {

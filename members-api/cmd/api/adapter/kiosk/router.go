@@ -14,6 +14,7 @@ func NewRouter() http.Handler {
 	r.Post("/checkouts/link", h.LinkCheckout)
 	r.Group(func(internal chi.Router) {
 		internal.Use(h.serviceAuth)
+		internal.Post("/members/resolve-line", h.ResolveLineMember)
 		internal.Post("/checkout-tokens", h.IssueCheckoutToken)
 		internal.Post("/checkouts/resolve", h.ResolveCheckout)
 		internal.Post("/coupon-reservations", h.ReserveCoupons)

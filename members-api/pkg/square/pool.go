@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/firestore"
+	"github.com/foodrecords/members-api/pkg/config"
 )
 
 var ErrPoolEmpty = errors.New("square coupon pool is empty")
@@ -35,7 +36,7 @@ func NewPool(fs *firestore.Client) *Pool {
 // トランザクション内の全 read が終わった後に ClaimInTx で確定してください。
 func (p *Pool) FindInTx(tx *firestore.Transaction, pricingRuleID string) (*PoolCandidate, error) {
 	docs, err := tx.Documents(
-		p.fs.Collection("square_pool").
+		config.DataCollection(p.fs, "square_pool").
 			Where("pricing_rule_id", "==", pricingRuleID).
 			Where("used", "==", false).
 			Limit(1),
@@ -82,7 +83,7 @@ func (p *Pool) ClaimOne(ctx context.Context, pricingRuleID, userID string) (stri
 
 // CountAvailable returns the number of unused codes for the given pricing_rule_id.
 func (p *Pool) CountAvailable(ctx context.Context, pricingRuleID string) (int, error) {
-	docs, err := p.fs.Collection("square_pool").
+	docs, err := config.DataCollection(p.fs, "square_pool").
 		Where("pricing_rule_id", "==", pricingRuleID).
 		Where("used", "==", false).
 		Documents(ctx).GetAll()

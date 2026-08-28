@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/firestore"
+	"github.com/foodrecords/members-api/pkg/config"
 	"github.com/foodrecords/members-api/pkg/logger"
 	"github.com/foodrecords/members-api/pkg/presenter"
 	"github.com/foodrecords/members-api/pkg/square"
@@ -68,7 +69,7 @@ func (h handler) Exchange(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	rewardSnap, err := h.fs.Collection("reward_catalog").Doc(rewardID).Get(ctx)
+	rewardSnap, err := config.DataCollection(h.fs, "reward_catalog").Doc(rewardID).Get(ctx)
 	if err != nil {
 		if status.Code(err) == codes.NotFound {
 			presenter.BadRequest(w, "特典が見つかりません")
@@ -90,7 +91,7 @@ func (h handler) Exchange(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	memberRef := h.fs.Collection("members").Doc(prof.UserID)
+	memberRef := config.DataCollection(h.fs, "members").Doc(prof.UserID)
 	var couponID string
 	var newPoint int
 	var squareCode, productURL string

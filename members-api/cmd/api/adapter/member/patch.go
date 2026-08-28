@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"cloud.google.com/go/firestore"
+	"github.com/foodrecords/members-api/pkg/config"
 	"github.com/foodrecords/members-api/pkg/logger"
 	"github.com/foodrecords/members-api/pkg/presenter"
 )
@@ -41,7 +42,7 @@ func (h handler) Patch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	memberRef := h.fs.Collection("members").Doc(prof.UserID)
+	memberRef := config.DataCollection(h.fs, "members").Doc(prof.UserID)
 	if _, err := memberRef.Update(ctx, []firestore.Update{
 		{Path: "name", Value: name},
 	}); err != nil {

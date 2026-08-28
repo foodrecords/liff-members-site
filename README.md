@@ -68,11 +68,19 @@ LINEミニアプリ（LIFF）を使ったQRコード型ポイント付与シス�
 
 ## Firestore コレクション構造
 
+ローカル開発では契約主体である`organization_uuid`をデータ境界とし、
+`organizations/{organization_uuid}`配下へ会員カードデータを保存する。
+現在の開発対象organizationは`35095fe0-1efc-40ff-bd13-9720c6d09e0f`。
+本番は明示的な移行まで従来パスを維持し、`MEMBERS_DATA_LAYOUT=organization`を設定した環境だけ新パスを使用する。
+
 | コレクション | ドキュメントID | フィールド |
 |---|---|---|
 | `serials` | シリアルコード（例: `FRABCD1234`） | `point: int`, `used: bool`, `used_id: string` |
 | `members` | LINE UserID | `number: int64`, `name: string`, `point: int` |
 | `member_numbers` | 6桁のメンバー番号（例: `000042`） | `user_id: string` |
+
+上表の各コレクションはorganizationレイアウトでは
+`organizations/{organization_uuid}/{collection}`として読み替える。
 
 ## リポジトリ構成
 

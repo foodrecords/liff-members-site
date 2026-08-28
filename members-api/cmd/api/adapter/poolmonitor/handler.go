@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/foodrecords/members-api/pkg/config"
 	"github.com/foodrecords/members-api/pkg/logger"
 	"github.com/foodrecords/members-api/pkg/presenter"
 )
@@ -28,7 +29,7 @@ type RuleStatus struct {
 func (h handler) Status(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	docs, err := h.fs.Collection("square_pool").
+	docs, err := config.DataCollection(h.fs, "square_pool").
 		Where("used", "==", false).
 		Documents(ctx).GetAll()
 	if err != nil {

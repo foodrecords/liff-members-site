@@ -57,6 +57,14 @@ Authorization: Bearer <LINE アクセストークン>
 | 400 | `このシリアルナンバーは既に使われています` | 使用済みコード |
 | 403 | `invalid token` | 無効な LINE トークン |
 
+### DELETE /members
+
+LINE認証済み会員を即時退会状態にする。本文に`{"confirmation":"DELETE"}`が必要。会員・ポイント・クーポンは復旧用として内部で30日間保持する。通常の`GET /members`は退会状態を解除せず`ACCOUNT_DELETED`を返し、利用者が明示的に`POST /members/restore`を実行した場合だけ元の会員番号とデータを復旧する。期限到来後の完全削除は、本番導入時に定期ジョブとして有効化する。
+
+### POST /members/register
+
+モバイルオーダーの簡易規約で明示同意した場合だけ会員を作成する。規約・プライバシーポリシーの現行バージョンと`consent_source=mobile_order_liff`を要求し、会員ドキュメントへバージョン、同意日時、同意元を保存する。退会から30日以内の同じLINE会員は、この操作で既存データを復旧する。通常の`GET /members`は未登録会員を自動作成せず`MEMBER_REGISTRATION_REQUIRED`を返す。
+
 ## ローカル開発
 
 ### 必要なもの
@@ -66,9 +74,17 @@ Authorization: Bearer <LINE アクセストークン>
 
 ### 起動
 
+orderecのFirebase Emulatorを使う場合：
+
+```bash
+make emulator-dev
+```
+
+従来のFirebaseプロジェクトへ接続するDocker環境を使う場合：
+
 ```bash
 # 環境変数ファイルをコピー
-cp etc/docker/.env.default etc/docker/.env
+cp etc/docker/.env.example etc/docker/.env
 # etc/docker/.env の PROJECT_ID を実際の Firebase プロジェクト ID に書き換える
 
 # Firebase 認証用のサービスアカウントキーを配置
@@ -85,10 +101,25 @@ make ud
 | `ENV` | `local` を指定すると `key.json` を使って Firebase に接続する |
 | `PROJECT_ID` | Firebase プロジェクト ID |
 | `MEMBERS_SERVICE_KEY` | kiosk APIとの内部通信に共有する十分に長いランダム秘密値。FirebaseやLINEの既存キーではなく、新規生成する |
+| `ORGANIZATION_UUID` | 会員データの契約主体。ローカル既定値は`35095fe0-1efc-40ff-bd13-9720c6d09e0f` |
+| `MEMBERS_DATA_LAYOUT` | `organization`で`organizations/{organization_uuid}`配下を使用。未設定時は本番互換の従来パス |
+| `LINE_LOGIN_CHANNEL_ID` | organizationに対応するLINE Login Channel ID。アクセストークン検証結果の`client_id`と照合する |
+
+Firestore Emulatorの従来パスをorganization配下へコピーする場合は次を実行する。旧データは削除しない。このコマンドは`FIRESTORE_EMULATOR_HOST`未設定時には停止する。
+
+```bash
+ENV=local PROJECT_ID=demo-orderec \
+FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 \
+ORGANIZATION_UUID=35095fe0-1efc-40ff-bd13-9720c6d09e0f \
+go run ./cmd/migrate-organization
+```
+
+本番では会員カードがFirebase／Firestoreプロジェクト`fr-agaruke`、orderec・モバイルオーダーが`food-records-prod`に分かれている。現在の移行コマンドはEmulator専用であり、本番統合には使用しない。本番実装時は件数・ポイント・クーポン・会員番号の整合確認、差分同期、切替、ロールバックを備えた専用マイグレーションを別途実装する。
 
 ## セルフレジ連携API
 
 - `POST /kiosk/checkouts/link`: LIFFがLINEアクセストークン付きでKiosk表示QRのトークンを会員へ紐づける。
+- `POST /kiosk/members/resolve-line`: orderec内部APIがLINEアクセストークンを検証し、organization内の会員情報を解決する。
 - `POST /kiosk/checkout-tokens`: kiosk APIが2分有効の連携トークンを発行する。
 - `POST /kiosk/checkouts/resolve`: kiosk APIが連携完了を確認し、会員・利用可能クーポンを取得する。
 - クーポン予約・取消・注文確定APIを含む内部APIは`X-Members-Service-Key`で認証する。
@@ -115,8 +146,7 @@ gcloud run deploy members-api \
   --platform managed \
   --image gcr.io/fr-agaruke/members-api \
   --region us-central1 \
-  --allow-unauthenticated \
-  --set-env-vars PROJECT_ID=fr-agaruke
+  --allow-unauthenticated
 ```
 
 ## パッケージ構成

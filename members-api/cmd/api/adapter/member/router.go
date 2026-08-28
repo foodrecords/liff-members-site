@@ -15,6 +15,10 @@ func NewRouter() http.Handler {
 
 	r.Get("/", h.Get)
 	r.Patch("/", h.Patch)
+	r.Delete("/", h.ScheduleDeletion)
+	r.Post("/deletion/cancel", h.CancelDeletion)
+	r.Post("/restore", h.Restore)
+	r.Post("/register", h.Register)
 
 	return r
 }

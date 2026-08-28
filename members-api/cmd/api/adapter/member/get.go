@@ -2,16 +2,16 @@ package member
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"math/rand"
 	"net/http"
 	"strings"
 	"time"
 
 	"cloud.google.com/go/firestore"
+	"github.com/foodrecords/members-api/pkg/config"
+	"github.com/foodrecords/members-api/pkg/lineauth"
 	"github.com/foodrecords/members-api/pkg/logger"
 	"github.com/foodrecords/members-api/pkg/presenter"
 	"github.com/foodrecords/members-api/pkg/rank"
@@ -23,11 +23,19 @@ import (
 const twoYears = 2 * 365 * 24 * time.Hour
 
 type memberDoc struct {
-	Number            int64     `firestore:"number"`
-	Name              string    `firestore:"name"`
-	Point             int       `firestore:"point"`
-	TotalEarnedPoint  int       `firestore:"total_earned_point"`
-	LastAccumulatedAt time.Time `firestore:"last_accumulated_at,omitempty"`
+	Number              int64      `firestore:"number"`
+	Name                string     `firestore:"name"`
+	Point               int        `firestore:"point"`
+	TotalEarnedPoint    int        `firestore:"total_earned_point"`
+	LastAccumulatedAt   time.Time  `firestore:"last_accumulated_at,omitempty"`
+	DeletionRequestedAt *time.Time `firestore:"deletion_requested_at,omitempty"`
+	DeletionScheduledAt *time.Time `firestore:"deletion_scheduled_at,omitempty"`
+	DeletedAt           *time.Time `firestore:"deleted_at,omitempty"`
+	PurgeAt             *time.Time `firestore:"purge_at,omitempty"`
+	TermsVersion        string     `firestore:"terms_version,omitempty"`
+	PrivacyVersion      string     `firestore:"privacy_policy_version,omitempty"`
+	ConsentedAt         *time.Time `firestore:"consented_at,omitempty"`
+	ConsentSource       string     `firestore:"consent_source,omitempty"`
 }
 
 type nextExpiry struct {
@@ -36,16 +44,19 @@ type nextExpiry struct {
 }
 
 type GetResp struct {
-	Number             string      `json:"number"`
-	Name               string      `json:"name"`
-	Point              int         `json:"point"`
-	TotalEarnedPoint   int         `json:"total_earned_point"`
-	Rank               string      `json:"rank"`
-	NextRank           string      `json:"next_rank,omitempty"`
-	NextRankPoint      int         `json:"next_rank_point,omitempty"`
-	IsNewMember        bool        `json:"is_new_member,omitempty"`
-	NextPointExpiry    *nextExpiry `json:"next_point_expiry,omitempty"`
-	AccumulatedResetAt string      `json:"accumulated_reset_at,omitempty"`
+	Number              string      `json:"number"`
+	Name                string      `json:"name"`
+	Point               int         `json:"point"`
+	TotalEarnedPoint    int         `json:"total_earned_point"`
+	Rank                string      `json:"rank"`
+	NextRank            string      `json:"next_rank,omitempty"`
+	NextRankPoint       int         `json:"next_rank_point,omitempty"`
+	IsNewMember         bool        `json:"is_new_member,omitempty"`
+	IsRestoredMember    bool        `json:"is_restored_member,omitempty"`
+	NextPointExpiry     *nextExpiry `json:"next_point_expiry,omitempty"`
+	AccumulatedResetAt  string      `json:"accumulated_reset_at,omitempty"`
+	DeletionRequestedAt string      `json:"deletion_requested_at,omitempty"`
+	DeletionScheduledAt string      `json:"deletion_scheduled_at,omitempty"`
 }
 
 type welcomeRewardDoc struct {
@@ -98,7 +109,7 @@ func (h handler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	memberRef := h.fs.Collection("members").Doc(prof.UserID)
+	memberRef := config.DataCollection(h.fs, "members").Doc(prof.UserID)
 	doc, err := memberRef.Get(ctx)
 	if err != nil && status.Code(err) != codes.NotFound {
 		logger.Error(err.Error())
@@ -112,6 +123,10 @@ func (h handler) Get(w http.ResponseWriter, r *http.Request) {
 		if err := doc.DataTo(&m); err != nil {
 			logger.Error(err.Error())
 			presenter.Error(w, err)
+			return
+		}
+		if m.DeletedAt != nil {
+			presenter.Forbidden(w, "ACCOUNT_DELETED")
 			return
 		}
 
@@ -134,6 +149,12 @@ func (h handler) Get(w http.ResponseWriter, r *http.Request) {
 		resp.Rank = ri.Current
 		resp.NextRank = ri.Next
 		resp.NextRankPoint = ri.NextThreshold
+		if m.DeletionRequestedAt != nil {
+			resp.DeletionRequestedAt = m.DeletionRequestedAt.Format(time.RFC3339)
+		}
+		if m.DeletionScheduledAt != nil {
+			resp.DeletionScheduledAt = m.DeletionScheduledAt.Format(time.RFC3339)
+		}
 
 		// 最も近いポイント失効予定を取得
 		logDocs, logErr := memberRef.Collection("point_logs").
@@ -159,6 +180,11 @@ func (h handler) Get(w http.ResponseWriter, r *http.Request) {
 			resp.AccumulatedResetAt = m.LastAccumulatedAt.Add(twoYears).Format(time.RFC3339)
 		}
 	} else {
+		consent, ok := registrationConsentFromContext(ctx)
+		if !ok {
+			presenter.Forbidden(w, "MEMBER_REGISTRATION_REQUIRED")
+			return
+		}
 		newNumber, err := generateUniqueNumber(ctx, h.fs)
 		if err != nil {
 			logger.Error(err.Error())
@@ -170,13 +196,17 @@ func (h handler) Get(w http.ResponseWriter, r *http.Request) {
 			Name:             prof.DisplayName,
 			Point:            0,
 			TotalEarnedPoint: 0,
+			TermsVersion:     consent.TermsVersion,
+			PrivacyVersion:   consent.PrivacyVersion,
+			ConsentedAt:      &consent.ConsentedAt,
+			ConsentSource:    consent.Source,
 		}
 		batch := h.fs.Batch()
 		batch.Set(memberRef, m)
-		batch.Set(h.fs.Collection("member_numbers").Doc(fmt.Sprintf("%06d", newNumber)), map[string]any{"user_id": prof.UserID})
+		batch.Set(config.DataCollection(h.fs, "member_numbers").Doc(fmt.Sprintf("%06d", newNumber)), map[string]any{"user_id": prof.UserID})
 
 		// ウェルカムクーポン発行（最もポイントの少ないアクティブな特典を動的取得）
-		if rewardSnaps, rewardErr := h.fs.Collection("reward_catalog").Where("active", "==", true).Documents(ctx).GetAll(); rewardErr == nil {
+		if rewardSnaps, rewardErr := config.DataCollection(h.fs, "reward_catalog").Where("active", "==", true).Documents(ctx).GetAll(); rewardErr == nil {
 			var bestSnap *firestore.DocumentSnapshot
 			var best welcomeRewardDoc
 			for _, snap := range rewardSnaps {
@@ -259,7 +289,7 @@ func generateUniqueNumber(ctx context.Context, fs *firestore.Client) (int64, err
 	ra := rand.New(rand.NewSource(time.Now().UnixNano()))
 	for {
 		n := int64(ra.Int31n(1000000))
-		doc, err := fs.Collection("member_numbers").Doc(fmt.Sprintf("%06d", n)).Get(ctx)
+		doc, err := config.DataCollection(fs, "member_numbers").Doc(fmt.Sprintf("%06d", n)).Get(ctx)
 		if err != nil {
 			if status.Code(err) == codes.NotFound {
 				return n, nil
@@ -272,33 +302,6 @@ func generateUniqueNumber(ctx context.Context, fs *firestore.Client) (int64, err
 	}
 }
 
-type GetProfileResp struct {
-	UserID        string `json:"userId"`
-	DisplayName   string `json:"displayName"`
-	PictureURL    string `json:"pictureUrl"`
-	StatusMessage string `json:"statusMessage"`
-}
-
-func getProfile(token string) (*GetProfileResp, error) {
-	client := &http.Client{Timeout: 60 * time.Second}
-
-	req, _ := http.NewRequest("GET", "https://api.line.me/v2/profile", nil)
-	req.Header.Set("Authorization", "Bearer "+token)
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	b, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	var profile GetProfileResp
-	if err := json.Unmarshal(b, &profile); err != nil {
-		return nil, err
-	}
-	return &profile, nil
+func getProfile(token string) (*lineauth.Profile, error) {
+	return lineauth.GetProfile(token)
 }

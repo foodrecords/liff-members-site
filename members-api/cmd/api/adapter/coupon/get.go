@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/foodrecords/members-api/pkg/config"
 	"github.com/foodrecords/members-api/pkg/logger"
 	"github.com/foodrecords/members-api/pkg/presenter"
 	"google.golang.org/grpc/codes"
@@ -73,7 +74,7 @@ func (h handler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	memberRef := h.fs.Collection("members").Doc(prof.UserID)
+	memberRef := config.DataCollection(h.fs, "members").Doc(prof.UserID)
 
 	docs, err := memberRef.Collection("coupons").Documents(ctx).GetAll()
 	if err != nil {

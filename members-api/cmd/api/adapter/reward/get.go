@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"sort"
 
+	"github.com/foodrecords/members-api/pkg/config"
 	"github.com/foodrecords/members-api/pkg/logger"
 	"github.com/foodrecords/members-api/pkg/presenter"
 )
@@ -39,7 +40,7 @@ type RewardResp struct {
 func (h handler) Get(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	docs, err := h.fs.Collection("reward_catalog").Where("active", "==", true).Documents(ctx).GetAll()
+	docs, err := config.DataCollection(h.fs, "reward_catalog").Where("active", "==", true).Documents(ctx).GetAll()
 	if err != nil {
 		logger.Error(err.Error())
 		presenter.Error(w, err)

@@ -8,7 +8,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"io"
 	"net/http"
 	"os"
 	"sort"
@@ -16,6 +15,8 @@ import (
 	"time"
 
 	"cloud.google.com/go/firestore"
+	"github.com/foodrecords/members-api/pkg/config"
+	"github.com/foodrecords/members-api/pkg/lineauth"
 	"github.com/foodrecords/members-api/pkg/presenter"
 	"github.com/go-chi/chi"
 	"google.golang.org/grpc/codes"
@@ -34,10 +35,60 @@ type memberTokenDoc struct {
 }
 
 type memberDoc struct {
-	Number           int64  `firestore:"number"`
-	Name             string `firestore:"name"`
-	Point            int    `firestore:"point"`
-	TotalEarnedPoint int    `firestore:"total_earned_point"`
+	Number           int64      `firestore:"number"`
+	Name             string     `firestore:"name"`
+	Point            int        `firestore:"point"`
+	TotalEarnedPoint int        `firestore:"total_earned_point"`
+	DeletedAt        *time.Time `firestore:"deleted_at,omitempty"`
+}
+
+func (h handler) ResolveLineMember(w http.ResponseWriter, r *http.Request) {
+	if requested := strings.TrimSpace(r.Header.Get("X-Organization-UUID")); requested != "" && requested != config.OrganizationUUID() {
+		presenter.Forbidden(w, "ORGANIZATION_MISMATCH")
+		return
+	}
+	token := bearer(r)
+	var uid string
+	var err error
+	if os.Getenv("ENV") == "local" && strings.HasPrefix(token, "local-line:") {
+		uid = strings.TrimSpace(strings.TrimPrefix(token, "local-line:"))
+		if uid == "" {
+			err = errors.New("missing local user")
+		}
+	} else {
+		uid, err = lineProfile(token)
+	}
+	if err != nil {
+		presenter.Forbidden(w, "INVALID_TOKEN")
+		return
+	}
+	ref := config.DataCollection(h.fs, "members").Doc(uid)
+	snap, err := ref.Get(r.Context())
+	if status.Code(err) == codes.NotFound {
+		presenter.EncodeWithMessage(w, map[string]interface{}{
+			"organization_uuid": config.OrganizationUUID(), "line_user_id": uid, "member_exists": false,
+		})
+		return
+	}
+	if err != nil {
+		presenter.Error(w, err)
+		return
+	}
+	var member memberDoc
+	if err := snap.DataTo(&member); err != nil {
+		presenter.Error(w, err)
+		return
+	}
+	if member.DeletedAt != nil {
+		presenter.EncodeWithMessage(w, map[string]interface{}{
+			"organization_uuid": config.OrganizationUUID(), "line_user_id": uid, "member_exists": false,
+		})
+		return
+	}
+	presenter.EncodeWithMessage(w, map[string]interface{}{
+		"organization_uuid": config.OrganizationUUID(), "line_user_id": uid, "member_exists": true,
+		"member_number": member.Number, "member_name": member.Name,
+	})
 }
 
 type couponDoc struct {
@@ -100,26 +151,11 @@ func (h handler) serviceAuth(next http.Handler) http.Handler {
 }
 
 func lineProfile(token string) (string, error) {
-	req, _ := http.NewRequest("GET", "https://api.line.me/v2/profile", nil)
-	req.Header.Set("Authorization", "Bearer "+token)
-	resp, err := (&http.Client{Timeout: 15 * time.Second}).Do(req)
+	profile, err := lineauth.GetProfile(token)
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return "", errors.New("invalid LINE token")
-	}
-	var body struct {
-		UserID string `json:"userId"`
-	}
-	if err := json.NewDecoder(io.LimitReader(resp.Body, 1<<20)).Decode(&body); err != nil {
-		return "", err
-	}
-	if body.UserID == "" {
-		return "", errors.New("missing LINE user")
-	}
-	return body.UserID, nil
+	return profile.UserID, nil
 }
 
 func tokenHash(value string) string {
@@ -153,7 +189,7 @@ func (h handler) IssueCheckoutToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	expires := time.Now().Add(tokenLifetime)
-	if _, err := h.fs.Collection("kiosk_member_tokens").Doc(tokenHash(token)).Set(r.Context(), memberTokenDoc{CheckoutID: body.CheckoutID, ExpiresAt: expires}); err != nil {
+	if _, err := config.DataCollection(h.fs, "kiosk_member_tokens").Doc(tokenHash(token)).Set(r.Context(), memberTokenDoc{CheckoutID: body.CheckoutID, ExpiresAt: expires}); err != nil {
 		presenter.Error(w, err)
 		return
 	}
@@ -173,7 +209,7 @@ func (h handler) LinkCheckout(w http.ResponseWriter, r *http.Request) {
 		presenter.BadRequest(w, "INVALID_BODY")
 		return
 	}
-	doc := h.fs.Collection("kiosk_member_tokens").Doc(tokenHash(body.Token))
+	doc := config.DataCollection(h.fs, "kiosk_member_tokens").Doc(tokenHash(body.Token))
 	err = h.fs.RunTransaction(r.Context(), func(ctx context.Context, tx *firestore.Transaction) error {
 		snap, err := tx.Get(doc)
 		if err != nil {
@@ -211,7 +247,7 @@ func (h handler) ResolveCheckout(w http.ResponseWriter, r *http.Request) {
 		presenter.BadRequest(w, "INVALID_BODY")
 		return
 	}
-	doc := h.fs.Collection("kiosk_member_tokens").Doc(tokenHash(body.Token))
+	doc := config.DataCollection(h.fs, "kiosk_member_tokens").Doc(tokenHash(body.Token))
 	var token memberTokenDoc
 	err := h.fs.RunTransaction(r.Context(), func(ctx context.Context, tx *firestore.Transaction) error {
 		snap, err := tx.Get(doc)
@@ -240,7 +276,7 @@ func (h handler) ResolveCheckout(w http.ResponseWriter, r *http.Request) {
 		presenter.EncodeWithMessage(w, map[string]interface{}{"status": "pending"})
 		return
 	}
-	memberRef := h.fs.Collection("members").Doc(token.UserID)
+	memberRef := config.DataCollection(h.fs, "members").Doc(token.UserID)
 	memberSnap, err := memberRef.Get(r.Context())
 	if err != nil {
 		presenter.Error(w, err)
@@ -302,7 +338,7 @@ func (h handler) ReserveCoupons(w http.ResponseWriter, r *http.Request) {
 		presenter.BadRequest(w, "INVALID_BODY")
 		return
 	}
-	tokenSnap, err := h.fs.Collection("kiosk_member_tokens").Doc(body.MemberSessionID).Get(r.Context())
+	tokenSnap, err := config.DataCollection(h.fs, "kiosk_member_tokens").Doc(body.MemberSessionID).Get(r.Context())
 	if err != nil {
 		presenter.BadRequest(w, "INVALID_MEMBER_SESSION")
 		return
@@ -312,7 +348,7 @@ func (h handler) ReserveCoupons(w http.ResponseWriter, r *http.Request) {
 		presenter.BadRequest(w, "INVALID_MEMBER_SESSION")
 		return
 	}
-	reservation := h.fs.Collection("kiosk_coupon_reservations").Doc(body.CheckoutID)
+	reservation := config.DataCollection(h.fs, "kiosk_coupon_reservations").Doc(body.CheckoutID)
 	selected := make([]couponResponse, 0, len(body.CouponIDs))
 	err = h.fs.RunTransaction(r.Context(), func(ctx context.Context, tx *firestore.Transaction) error {
 		now := time.Now()
@@ -327,7 +363,7 @@ func (h handler) ReserveCoupons(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		for _, id := range body.CouponIDs {
-			ref := h.fs.Collection("members").Doc(token.UserID).Collection("coupons").Doc(id)
+			ref := config.DataCollection(h.fs, "members").Doc(token.UserID).Collection("coupons").Doc(id)
 			snap, err := tx.Get(ref)
 			if err != nil {
 				return err
@@ -358,13 +394,13 @@ func (h handler) ReserveCoupons(w http.ResponseWriter, r *http.Request) {
 			if selectedSet[id] {
 				continue
 			}
-			ref := h.fs.Collection("members").Doc(token.UserID).Collection("coupons").Doc(id)
+			ref := config.DataCollection(h.fs, "members").Doc(token.UserID).Collection("coupons").Doc(id)
 			if err := tx.Update(ref, []firestore.Update{{Path: "status", Value: "available"}, {Path: "reserved_by_checkout_id", Value: ""}, {Path: "reservation_expires_at", Value: time.Time{}}}); err != nil {
 				return err
 			}
 		}
 		for _, id := range body.CouponIDs {
-			ref := h.fs.Collection("members").Doc(token.UserID).Collection("coupons").Doc(id)
+			ref := config.DataCollection(h.fs, "members").Doc(token.UserID).Collection("coupons").Doc(id)
 			if err := tx.Update(ref, []firestore.Update{{Path: "status", Value: "reserved"}, {Path: "reserved_by_checkout_id", Value: body.CheckoutID}, {Path: "reserved_at", Value: now}, {Path: "reservation_expires_at", Value: now.Add(reservationLifetime)}}); err != nil {
 				return err
 			}
@@ -388,7 +424,7 @@ func (h handler) CancelReservation(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h handler) cancel(ctx context.Context, id string) error {
-	ref := h.fs.Collection("kiosk_coupon_reservations").Doc(id)
+	ref := config.DataCollection(h.fs, "kiosk_coupon_reservations").Doc(id)
 	return h.fs.RunTransaction(ctx, func(ctx context.Context, tx *firestore.Transaction) error {
 		snap, err := tx.Get(ref)
 		if err != nil {
@@ -402,7 +438,7 @@ func (h handler) cancel(ctx context.Context, id string) error {
 			return nil
 		}
 		for _, cid := range res.CouponIDs {
-			coupon := h.fs.Collection("members").Doc(res.MemberID).Collection("coupons").Doc(cid)
+			coupon := config.DataCollection(h.fs, "members").Doc(res.MemberID).Collection("coupons").Doc(cid)
 			if err := tx.Update(coupon, []firestore.Update{{Path: "status", Value: "available"}, {Path: "reserved_by_checkout_id", Value: ""}, {Path: "reservation_expires_at", Value: time.Time{}}}); err != nil {
 				return err
 			}
@@ -427,7 +463,7 @@ func (h handler) FinalizeOrder(w http.ResponseWriter, r *http.Request) {
 	if body.Points <= 0 {
 		body.Points = 100
 	}
-	resRef := h.fs.Collection("kiosk_coupon_reservations").Doc(body.ReservationID)
+	resRef := config.DataCollection(h.fs, "kiosk_coupon_reservations").Doc(body.ReservationID)
 	err := h.fs.RunTransaction(r.Context(), func(ctx context.Context, tx *firestore.Transaction) error {
 		resSnap, err := tx.Get(resRef)
 		if err != nil {
@@ -446,7 +482,7 @@ func (h handler) FinalizeOrder(w http.ResponseWriter, r *http.Request) {
 		if res.ExpiresAt.Before(time.Now()) {
 			return errors.New("RESERVATION_EXPIRED")
 		}
-		memberRef := h.fs.Collection("members").Doc(res.MemberID)
+		memberRef := config.DataCollection(h.fs, "members").Doc(res.MemberID)
 		memberSnap, err := tx.Get(memberRef)
 		if err != nil {
 			return err

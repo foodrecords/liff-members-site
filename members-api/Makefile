@@ -47,6 +47,17 @@ dd:
 dev:
 	go run ./cmd/devserver/
 
+# orderecのFirebase Emulatorへ接続する会員API。外部LINEは呼ばず、
+# local-line:<user>形式の開発トークンだけを追加で許可する。
+.PHONY: emulator-dev
+emulator-dev:
+	ENV=local PROJECT_ID=demo-orderec \
+	FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 \
+	ORGANIZATION_UUID=35095fe0-1efc-40ff-bd13-9720c6d09e0f \
+	MEMBERS_DATA_LAYOUT=organization \
+	MEMBERS_SERVICE_KEY=local-members-service-key \
+	go run ./cmd/api
+
 .PHONY: deploy
 deploy:
 	cd etc/docker; docker-compose -f docker-compose_prod.yml up -d --build \
