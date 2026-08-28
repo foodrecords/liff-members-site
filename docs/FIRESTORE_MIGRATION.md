@@ -107,6 +107,15 @@ go run ./cmd/migrate-production \
 
 棚卸し時点から切替までの更新は取り込まれないため、本番コピー直前に書き込みを止めて再度inventoryを取得する。
 
+## 2026-08-28本番コピー結果
+
+- `gs://fr-agaruke-firestore-backups/2026-08-28T2048JST-pre-org-migration`へFirestore全体のmanaged exportを取得した。exportは`SUCCESSFUL`、処理対象は1,618文書。専用バケットは`us-central1`、uniform bucket-level access、30日保持。
+- 永続データ281文書を`food-records-prod/organizations/35095fe0-1efc-40ff-bd13-9720c6d09e0f`配下へコピーした。
+- コピー直後の再読込と、別実行の`verify`の双方で、欠損0、余分0、内容不一致0を確認した。
+- 会員19、会員番号index 28、特典4、シリアル30、Square pool 200、ポイント残高合計1,400、累積獲得ポイント合計1,400が一致した。
+- 旧`fr-agaruke`のデータは削除していない。Kiosk token・クーポン予約もコピーしていない。
+- members API、members-site、GAS、Kiosk、モバイル注文の参照先切替は未実施。旧側では有効Kiosk tokenが1件継続しているため、接続切替前に発行停止と失効確認が必要。
+
 ## 本番切替
 
 1. `fr-agaruke`のFirestore exportを取得し、復元先と保持期間を記録する。
