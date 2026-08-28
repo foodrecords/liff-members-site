@@ -73,6 +73,8 @@ LINEミニアプリ（LIFF）を使ったQRコード型ポイント付与シス�
 現在の開発対象organizationは`35095fe0-1efc-40ff-bd13-9720c6d09e0f`。
 本番は明示的な移行まで従来パスを維持し、`MEMBERS_DATA_LAYOUT=organization`を設定した環境だけ新パスを使用する。
 
+本番Firestoreの棚卸し、再実行可能コピー、検証、切替、ロールバック手順は[`docs/FIRESTORE_MIGRATION.md`](docs/FIRESTORE_MIGRATION.md)を参照する。
+
 | コレクション | ドキュメントID | フィールド |
 |---|---|---|
 | `serials` | シリアルコード（例: `FRABCD1234`） | `point: int`, `used: bool`, `used_id: string` |
