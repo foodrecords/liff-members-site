@@ -34,7 +34,7 @@ var transientRoots = []string{"kiosk_member_tokens", "kiosk_coupon_reservations"
 
 type options struct {
 	mode, sourceProject, targetProject, organization, reportPath string
-	apply, overwriteConflicts                                    bool
+	apply, overwriteConflicts, missingOnly                       bool
 }
 
 type record struct {
@@ -112,6 +112,7 @@ func parseFlags() options {
 	flag.StringVar(&opts.reportPath, "report", "-", "JSON report path, or - for stdout")
 	flag.BoolVar(&opts.apply, "apply", false, "allow writes in copy mode")
 	flag.BoolVar(&opts.overwriteConflicts, "overwrite-conflicts", false, "overwrite destination documents whose content differs")
+	flag.BoolVar(&opts.missingOnly, "missing-only", false, "copy only source documents absent from the destination and preserve all existing destination documents")
 	flag.Parse()
 	return opts
 }
@@ -133,6 +134,9 @@ func run(ctx context.Context, opts options) error {
 		want := opts.sourceProject + "->" + opts.targetProject + "/" + opts.organization
 		if os.Getenv("MEMBERS_MIGRATION_CONFIRM") != want {
 			return fmt.Errorf("copy mode requires MEMBERS_MIGRATION_CONFIRM=%q", want)
+		}
+		if opts.missingOnly && opts.overwriteConflicts {
+			return errors.New("--missing-only and --overwrite-conflicts cannot be used together")
 		}
 	}
 
@@ -168,15 +172,18 @@ func run(ctx context.Context, opts options) error {
 			"kiosk_member_tokens and kiosk_coupon_reservations are inventoried but intentionally not copied; drain them before cutover.",
 		},
 	}
+	if opts.missingOnly {
+		report.Notes = append(report.Notes, "missing-only mode preserves destination documents even when their contents differ from the source.")
+	}
 
 	if opts.mode == "copy" {
 		if report.Source.Integrity.DocumentReferences != 0 {
 			return errors.New("source contains Firestore document references; migration is blocked until their destination mapping is reviewed")
 		}
-		if report.Comparison.ExtraInTarget != 0 {
+		if report.Comparison.ExtraInTarget != 0 && !opts.missingOnly {
 			return errors.New("destination contains documents absent from the source; copy is blocked until they are reviewed")
 		}
-		copied, skipped, err := copyRecords(ctx, target, targetBase, filterDurable(sourceRecords), filterDurable(targetRecords), opts.overwriteConflicts)
+		copied, skipped, err := copyRecords(ctx, target, targetBase, filterDurable(sourceRecords), filterDurable(targetRecords), opts.overwriteConflicts, opts.missingOnly)
 		if err != nil {
 			return err
 		}
@@ -199,7 +206,11 @@ func run(ctx context.Context, opts options) error {
 		return err
 	}
 	if opts.mode == "verify" || opts.mode == "copy" {
-		if report.Comparison.MissingInTarget != 0 || report.Comparison.ExtraInTarget != 0 || report.Comparison.ContentMismatch != 0 {
+		failed := report.Comparison.MissingInTarget != 0
+		if !opts.missingOnly {
+			failed = failed || report.Comparison.ExtraInTarget != 0 || report.Comparison.ContentMismatch != 0
+		}
+		if failed {
 			return errors.New("source and destination verification failed; see report")
 		}
 	}
@@ -258,8 +269,10 @@ func readCollectionGroup(ctx context.Context, client *firestore.Client, base *fi
 	iter := client.CollectionGroup(group).Documents(ctx)
 	defer iter.Stop()
 	prefix := root + "/"
+	basePath := ""
 	if base != nil {
-		prefix = base.Path + "/" + prefix
+		basePath = relativeFirestorePath(base.Path)
+		prefix = basePath + "/" + prefix
 	}
 	for {
 		doc, err := iter.Next()
@@ -269,16 +282,28 @@ func readCollectionGroup(ctx context.Context, client *firestore.Client, base *fi
 		if err != nil {
 			return err
 		}
-		if !strings.HasPrefix(doc.Ref.Path, prefix) {
+		documentPath := relativeFirestorePath(doc.Ref.Path)
+		if !strings.HasPrefix(documentPath, prefix) {
 			continue
 		}
-		logicalPath := doc.Ref.Path
+		logicalPath := documentPath
 		if base != nil {
-			logicalPath = strings.TrimPrefix(logicalPath, base.Path+"/")
+			logicalPath = strings.TrimPrefix(logicalPath, basePath+"/")
 		}
 		data := doc.Data()
 		result[logicalPath] = record{Path: logicalPath, Data: data, Hash: dataHash(data)}
 	}
+}
+
+// CollectionGroup document references may expose either a database-relative
+// path or a full Firestore resource name depending on the client response.
+// Normalize both forms before applying source/organization path filters.
+func relativeFirestorePath(path string) string {
+	const marker = "/documents/"
+	if index := strings.Index(path, marker); index >= 0 {
+		return path[index+len(marker):]
+	}
+	return strings.TrimPrefix(path, "/")
 }
 
 func contains(values []string, target string) bool {
@@ -304,10 +329,10 @@ func filterDurable(records map[string]record) map[string]record {
 	return result
 }
 
-func copyRecords(ctx context.Context, targetClient *firestore.Client, targetBase *firestore.DocumentRef, source, target map[string]record, overwrite bool) (int, int, error) {
+func copyRecords(ctx context.Context, targetClient *firestore.Client, targetBase *firestore.DocumentRef, source, target map[string]record, overwrite, missingOnly bool) (int, int, error) {
 	paths := sortedPaths(source)
 	for _, path := range paths {
-		if existing, ok := target[path]; ok && existing.Hash != source[path].Hash && !overwrite {
+		if existing, ok := target[path]; ok && existing.Hash != source[path].Hash && !overwrite && !missingOnly {
 			return 0, 0, fmt.Errorf("destination conflict at hashed path %s; rerun only after review, or use --overwrite-conflicts", pathHash(path))
 		}
 	}
@@ -326,7 +351,7 @@ func copyRecords(ctx context.Context, targetClient *firestore.Client, targetBase
 	}
 	for _, path := range paths {
 		item := source[path]
-		if existing, ok := target[path]; ok && existing.Hash == item.Hash {
+		if existing, ok := target[path]; ok && (missingOnly || existing.Hash == item.Hash) {
 			skipped++
 			continue
 		}

@@ -8,8 +8,8 @@
 ## 本番Firestore統合
 
 - [ ] 本番会員カードの`fr-agaruke`とモバイルオーダーの`food-records-prod`を統合する移行方針を確定する
-- [x] `fr-agaruke`のmembers、member_numbers、coupons、point_logs、reward_catalog、serials、Squareクーポンプール、Kiosk会員連携データの全件数と参照関係を棚卸しする（2026-08-28、読み取り専用inventory実施。永続データ281文書、会員番号重複index 9件、有効Kiosk token 1件を確認）
-- [x] 移行先を`food-records-prod/organizations/35095fe0-1efc-40ff-bd13-9720c6d09e0f/...`として、読み取り専用の事前検査と再実行可能な本番マイグレーションを実装し、本番コピー・独立verifyを完了する（2026-08-28、281文書、欠損・余分・内容不一致0）
+- [x] `fr-agaruke`のmembers、member_numbers、coupons、point_logs、reward_catalog、serials、Squareクーポンプール、Kiosk会員連携データの全件数と参照関係を棚卸しする（2026-09-05、collection groupパス正規化修正後に永続データ320文書、会員クーポン21件、ポイント履歴13件、QR利用履歴1件を確認）
+- [x] 移行先を`food-records-prod/organizations/35095fe0-1efc-40ff-bd13-9720c6d09e0f/...`として、読み取り専用の事前検査と再実行可能な本番マイグレーションを実装し、本番コピー・独立verifyを完了する（2026-09-05、漏れていたサブコレクション35件をmissing-onlyで追加。クーポン21件は欠損・余分・内容不一致0）
 - [x] LINE User ID、会員番号、ポイント残高、累積ポイント、ランク、クーポン状態、有効期限、冪等付与履歴が移行前後で一致する検証レポートを出力する（2026-09-05、最新285文書を再コピーし、独立verifyで欠損・余分・内容不一致0。レポートはGit管理外に保存）
 - [ ] 移行中の更新を取りこぼさない差分同期または短時間の書込停止手順を決定する
 - [/] members APIとモバイルオーダーAPIを`food-records-prod`のorganization配下へ切り替える手順、Secret Manager、IAM、Firestore index・TTLを整備する（2026-09-05、members APIのIAM・接続先・organization layout切替まで完了。モバイルオーダーAPI、index・TTLの最終確認は未実施）

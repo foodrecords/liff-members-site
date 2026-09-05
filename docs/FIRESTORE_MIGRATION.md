@@ -136,6 +136,15 @@ go run ./cmd/migrate-production \
 - 初回切替revisionで`LINE_LOGIN_CHANNEL_ID`が未設定だったため、members siteの実LIFFアクセスが`INVALID_TOKEN`になった。2026-09-05に本番LIFF IDと対応するChannel IDをCloud Runへ設定し、revision `members-api-00038-c5n`を100%配信した。ヘルスチェックHTTP 200、Firestore権限エラー・panicなしを確認した。
 - Kiosk API `orderec-kiosk-api-00046-6xv`は切替前から同じmembers API本番URLを参照し、`MEMBERS_SERVICE_KEY`もmembers APIと一致していた。会員・トークン・クーポン処理はmembers API経由のため、members APIのorganization layout切替によりKiosk側の保存先も同時に新organizationへ切り替わる。Kiosk APIの再デプロイは不要。共有キー付きの無書込対照試験で`INVALID_BODY`まで到達し内部認証成功、`api.kiosk.orderec.com`のヘルスチェックHTTP 200、直近エラーログなしを確認した。
 
+## 2026-09-05 会員サブコレクション再移行
+
+- 利用者確認を受けてFirestore collection groupを直接照会し、旧側に`members/{id}/coupons` 21件が存在する一方、新organization側は0件だったことを確認した。
+- 原因は、マイグレーションツールがcollection groupのDocumentRefフルリソースパスを相対パスとして比較していたこと。`coupons`だけでなく`point_logs` 13件と`serials/{id}/user_scans` 1件も集計・コピーから漏れていた。
+- フルリソース名と相対パスの双方を正規化する修正・回帰テストを追加。切替後の新環境にポイント100・ポイント履歴1件が追加済みだったため、既存文書を上書きしない`--missing-only`モードを追加した。
+- 欠けていた35文書を追加し、新環境でクーポン21件（使用済み3件）、ポイント履歴14件（旧13件＋切替後1件）、QR利用履歴1件を確認。クーポンは独立REST比較で欠損0、余分0、内容不一致0。
+- 旧側は永続データ320件、新側は321件。新側だけのポイント履歴1件と会員ポイント差分100は切替後の正常な利用実績として保持し、旧データで上書きしていない。
+- 旧直下の`coupon_definitions` 12件は全件有効・期限内だが、現行実行コードから参照されず、`REQUIREMENTS.md`でも廃止済みと定義されているため移行対象外とした。現行の特典定義は`reward_catalog` 4件、発行済みクーポンは会員配下21件を使用する。
+
 ## 本番切替
 
 1. `fr-agaruke`のFirestore exportを取得し、復元先と保持期間を記録する。
