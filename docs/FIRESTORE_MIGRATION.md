@@ -133,6 +133,7 @@ go run ./cmd/migrate-production \
 - members API revision `members-api-00037-9dd`を100%配信し、`PROJECT_ID=food-records-prod`、対象organization、`MEMBERS_DATA_LAYOUT=organization`へ切り替えた。ヘルスチェックHTTP 200、未認証`GET /members`の`INVALID_TOKEN`応答を確認した。
 - members siteへ初回登録の規約・プライバシーポリシー同意UIと`POST /members/register`を追加した。既存会員は従来どおり`GET /members`で表示し、未登録者だけ登録画面へ進む。
 - 旧`fr-agaruke`のデータは削除せず、ロールバック用に保持する。GAS、Kiosk、モバイルオーダーAPIの切替は別工程。
+- 初回切替revisionで`LINE_LOGIN_CHANNEL_ID`が未設定だったため、members siteの実LIFFアクセスが`INVALID_TOKEN`になった。2026-09-05に本番LIFF IDと対応するChannel IDをCloud Runへ設定し、revision `members-api-00038-c5n`を100%配信した。ヘルスチェックHTTP 200、Firestore権限エラー・panicなしを確認した。
 
 ## 本番切替
 
