@@ -26,9 +26,9 @@ func baseURL() string {
 }
 
 func VerifyAccessToken(token string) error {
-	expected := strings.TrimSpace(os.Getenv("LINE_LOGIN_CHANNEL_ID"))
-	if expected == "" {
-		return errors.New("LINE_LOGIN_CHANNEL_ID is not configured")
+	expected := allowedChannelIDs()
+	if len(expected) == 0 {
+		return errors.New("LINE login channel IDs are not configured")
 	}
 	endpoint := baseURL() + "/oauth2/v2.1/verify?access_token=" + url.QueryEscape(token)
 	resp, err := (&http.Client{Timeout: 15 * time.Second}).Get(endpoint)
@@ -46,10 +46,24 @@ func VerifyAccessToken(token string) error {
 	if err := json.NewDecoder(io.LimitReader(resp.Body, 1<<20)).Decode(&body); err != nil {
 		return err
 	}
-	if body.ClientID != expected || body.ExpiresIn <= 0 {
+	if !expected[body.ClientID] || body.ExpiresIn <= 0 {
 		return errors.New("LINE access token channel mismatch or expired")
 	}
 	return nil
+}
+
+func allowedChannelIDs() map[string]bool {
+	configured := os.Getenv("LINE_LOGIN_CHANNEL_IDS")
+	if strings.TrimSpace(configured) == "" {
+		configured = os.Getenv("LINE_LOGIN_CHANNEL_ID")
+	}
+	result := make(map[string]bool)
+	for _, value := range strings.Split(configured, ",") {
+		if value = strings.TrimSpace(value); value != "" {
+			result[value] = true
+		}
+	}
+	return result
 }
 
 func GetProfile(token string) (*Profile, error) {

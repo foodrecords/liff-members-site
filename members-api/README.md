@@ -104,6 +104,7 @@ make ud
 | `ORGANIZATION_UUID` | 会員データの契約主体。ローカル既定値は`35095fe0-1efc-40ff-bd13-9720c6d09e0f` |
 | `MEMBERS_DATA_LAYOUT` | `organization`で`organizations/{organization_uuid}`配下を使用。未設定時は本番互換の従来パス |
 | `LINE_LOGIN_CHANNEL_ID` | organizationに対応するLINE Login Channel ID。アクセストークン検証結果の`client_id`と照合する |
+| `LINE_LOGIN_CHANNEL_IDS` | 許可するLINE Login Channel IDをカンマ区切りで指定する。members siteとモバイルオーダーでChannelが異なる場合に使用し、設定時は単数形より優先する |
 
 Firestore Emulatorの従来パスをorganization配下へコピーする場合は次を実行する。旧データは削除しない。このコマンドは`FIRESTORE_EMULATOR_HOST`未設定時には停止する。
 

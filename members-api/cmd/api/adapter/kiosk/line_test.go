@@ -56,8 +56,29 @@ func TestLineProfileRejectsAnotherChannel(t *testing.T) {
 	}
 }
 
+func TestLineProfileAcceptsConfiguredChannelList(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/oauth2/v2.1/verify":
+			fmt.Fprint(w, `{"client_id":"mobile-channel","expires_in":3600}`)
+		case "/v2/profile":
+			fmt.Fprint(w, `{"userId":"Umobile"}`)
+		}
+	}))
+	defer server.Close()
+	t.Setenv("LINE_API_BASE_URL", server.URL)
+	t.Setenv("LINE_LOGIN_CHANNEL_IDS", "members-channel, mobile-channel")
+	t.Setenv("LINE_LOGIN_CHANNEL_ID", "")
+
+	uid, err := lineProfile("valid-token")
+	if err != nil || uid != "Umobile" {
+		t.Fatalf("uid=%q err=%v", uid, err)
+	}
+}
+
 func TestLineProfileRequiresConfiguredChannel(t *testing.T) {
 	t.Setenv("LINE_LOGIN_CHANNEL_ID", "")
+	t.Setenv("LINE_LOGIN_CHANNEL_IDS", "")
 	if _, err := lineProfile("token"); err == nil {
 		t.Fatal("expected missing channel configuration error")
 	}
