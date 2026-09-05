@@ -6,4 +6,6 @@ window.APP_CONFIG = {
   termsUrl: "https://members.agaruke.com/terms.html",
   faqUrl: "",
   privacyPolicyUrl: "https://food-records.com/privacy-policy/",
+  termsVersion: "2026-08-28",
+  privacyPolicyVersion: "2026-08-28",
 };

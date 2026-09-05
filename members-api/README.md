@@ -11,7 +11,7 @@ FOOD RECORDS メンバーズの Go API サーバー。Cloud Run で稼働する�
 ### GET /members
 
 LINE アクセストークンでユーザーを特定し、ポイント残高とメンバー番号を返す。
-メンバー未登録の場合は新規作成する。
+メンバー未登録の場合は`MEMBER_REGISTRATION_REQUIRED`を返し、規約同意後の`POST /members/register`でのみ新規作成する。
 
 **リクエスト**
 ```
@@ -63,7 +63,7 @@ LINE認証済み会員を即時退会状態にする。本文に`{"confirmation"
 
 ### POST /members/register
 
-モバイルオーダーの簡易規約で明示同意した場合だけ会員を作成する。規約・プライバシーポリシーの現行バージョンと`consent_source=mobile_order_liff`を要求し、会員ドキュメントへバージョン、同意日時、同意元を保存する。退会から30日以内の同じLINE会員は、この操作で既存データを復旧する。通常の`GET /members`は未登録会員を自動作成せず`MEMBER_REGISTRATION_REQUIRED`を返す。
+モバイルオーダーまたはmembers siteの規約画面で明示同意した場合だけ会員を作成する。規約・プライバシーポリシーの現行バージョンと`consent_source`（`mobile_order_liff`または`members_site_liff`）を要求し、会員ドキュメントへバージョン、同意日時、同意元を保存する。退会から30日以内の同じLINE会員は、この操作で既存データを復旧する。通常の`GET /members`は未登録会員を自動作成せず`MEMBER_REGISTRATION_REQUIRED`を返す。
 
 ## ローカル開発
 

@@ -116,6 +116,24 @@ go run ./cmd/migrate-production \
 - 旧`fr-agaruke`のデータは削除していない。Kiosk token・クーポン予約もコピーしていない。
 - members API、members-site、GAS、Kiosk、モバイル注文の参照先切替は未実施。旧側では有効Kiosk tokenが1件継続しているため、接続切替前に発行停止と失効確認が必要。
 
+## 2026-09-05差分再取得・本番コピー結果
+
+- 前回コピー後の変更を取り込むため、本番2プロジェクトを再棚卸しした。旧側は永続データ285文書、移行先は281文書で、移行先にのみ存在する文書は0件だった。
+- 旧側は会員21、会員番号index 30、特典4、シリアル30、Square pool 200、ポイント残高合計1,600、累積獲得ポイント合計1,600。会員番号の欠損・不一致・孤立、DocumentReference、有効Kiosk token、有効クーポン予約はいずれも0件だった。
+- `gs://fr-agaruke-firestore-backups/2026-09-05T0923JST-pre-org-migration-refresh`へ最新のmanaged exportを取得した。operationは`SUCCESSFUL`で完了した。
+- 旧側を正として、移行先へ差分7文書（新規4、内容更新3）を反映し、一致済み278文書をスキップした。旧データと一時状態は削除していない。
+- コピー直後の再読込と独立`verify`の双方で、永続データ285文書、欠損0、余分0、内容不一致0を確認した。個人情報を含まないレポートはGit管理外の`/private/tmp/members-firestore-migration-20260905/`へ保存した。
+- この時点ではmembers API、members-site、GAS、Kiosk、モバイル注文の参照先切替と`MEMBERS_DATA_LAYOUT=organization`の本番有効化は行っていない。旧側が引き続き書込先のため、切替直前に再度inventory／差分copy／verifyを行う。
+
+## 2026-09-05 members API・members site切替
+
+- 切替用イメージを固有タグで作成し、旧revision `members-api-00036-h6s`をロールバック先として保持した。
+- Cloud Run実行サービスアカウントへ`food-records-prod`の`roles/datastore.user`を付与した。
+- 切替直前に差分copyを再実行し、永続データ285文書の一致を確認した。
+- members API revision `members-api-00037-9dd`を100%配信し、`PROJECT_ID=food-records-prod`、対象organization、`MEMBERS_DATA_LAYOUT=organization`へ切り替えた。ヘルスチェックHTTP 200、未認証`GET /members`の`INVALID_TOKEN`応答を確認した。
+- members siteへ初回登録の規約・プライバシーポリシー同意UIと`POST /members/register`を追加した。既存会員は従来どおり`GET /members`で表示し、未登録者だけ登録画面へ進む。
+- 旧`fr-agaruke`のデータは削除せず、ロールバック用に保持する。GAS、Kiosk、モバイルオーダーAPIの切替は別工程。
+
 ## 本番切替
 
 1. `fr-agaruke`のFirestore exportを取得し、復元先と保持期間を記録する。

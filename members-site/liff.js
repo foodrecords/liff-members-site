@@ -238,10 +238,56 @@ function showPoint(token, onComplete) {
             hideLoader();
             var msg = jqXHR.responseJSON && jqXHR.responseJSON.message || jqXHR.statusText || 'network error (status=' + jqXHR.status + ')';
             console.error('[API] /members error:', jqXHR.status, msg);
+            if (msg === 'MEMBER_REGISTRATION_REQUIRED') {
+                openRegistrationDialog(token, onComplete);
+                return;
+            }
             showAlert(msg);
             if (onComplete) onComplete();
         }
     });
+}
+
+function openRegistrationDialog(token, onComplete) {
+    var $dialog = $('#registration-dialog');
+    var $consent = $('#registration-consent');
+    var $submit = $('#registration-submit-btn');
+    var $error = $('#registration-error');
+
+    $consent.prop('checked', false).off('change').on('change', function () {
+        $submit.prop('disabled', !this.checked);
+    });
+    $submit.prop('disabled', true).text('同意して登録する').off('click').on('click', function () {
+        if (!$consent.prop('checked')) return;
+        $submit.prop('disabled', true).text('登録中...');
+        $error.text('');
+        $.ajax({
+            beforeSend: function (request) {
+                request.setRequestHeader('Authorization', 'Bearer ' + token);
+            },
+            dataType: 'json',
+            contentType: 'application/json',
+            url: window.APP_CONFIG.apiUrl + '/members/register',
+            type: 'POST',
+            data: JSON.stringify({
+                terms_version: window.APP_CONFIG.termsVersion,
+                privacy_policy_version: window.APP_CONFIG.privacyPolicyVersion,
+                consent_source: 'members_site_liff'
+            }),
+            success: function () {
+                $dialog.removeClass('is-open');
+                $('body').removeClass('dialog-open');
+                showPoint(token, onComplete);
+            },
+            error: function (jqXHR) {
+                var msg = jqXHR.responseJSON && jqXHR.responseJSON.message || '会員登録に失敗しました。時間をおいて再度お試しください。';
+                $error.text(msg);
+                $submit.prop('disabled', false).text('同意して登録する');
+            }
+        });
+    });
+    $dialog.addClass('is-open');
+    $('body').addClass('dialog-open');
 }
 
 function refreshPointBalance() {

@@ -144,6 +144,26 @@
         </div>
     </div>
 
+    <!-- 初回会員登録ダイアログ -->
+    <div id="registration-dialog" class="custom-dialog">
+        <div class="custom-dialog-overlay"></div>
+        <div class="custom-dialog-content registration-dialog-content">
+            <p class="custom-dialog-message">会員登録</p>
+            <p class="registration-dialog-text">
+                登録前に<a href="https://members.agaruke.com/terms.html" target="_blank" rel="noopener">ポイントカード利用規約</a>と
+                <a href="https://food-records.com/privacy-policy/" target="_blank" rel="noopener">プライバシーポリシー</a>をご確認ください。
+            </p>
+            <label class="registration-consent-label">
+                <input id="registration-consent" type="checkbox">
+                <span>利用規約とプライバシーポリシーに同意します</span>
+            </label>
+            <p id="registration-error" class="registration-error" aria-live="polite"></p>
+            <div class="custom-dialog-buttons">
+                <button id="registration-submit-btn" class="custom-dialog-btn custom-dialog-btn--ok" disabled>同意して登録する</button>
+            </div>
+        </div>
+    </div>
+
     <!-- カスタムダイアログ -->
     <div id="custom-dialog" class="custom-dialog">
         <div class="custom-dialog-overlay" id="dialog-overlay"></div>

@@ -16,6 +16,7 @@ const (
 	CurrentTermsVersion   = "2026-08-28"
 	CurrentPrivacyVersion = "2026-08-28"
 	MobileOrderSource     = "mobile_order_liff"
+	MembersSiteSource     = "members_site_liff"
 )
 
 type registrationRequest struct {
@@ -43,7 +44,7 @@ func (h handler) Register(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil ||
 		body.TermsVersion != CurrentTermsVersion ||
 		body.PrivacyVersion != CurrentPrivacyVersion ||
-		body.ConsentSource != MobileOrderSource {
+		(body.ConsentSource != MobileOrderSource && body.ConsentSource != MembersSiteSource) {
 		presenter.BadRequest(w, "MEMBER_CONSENT_REQUIRED")
 		return
 	}
