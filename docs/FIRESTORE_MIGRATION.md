@@ -134,6 +134,7 @@ go run ./cmd/migrate-production \
 - members siteへ初回登録の規約・プライバシーポリシー同意UIと`POST /members/register`を追加した。既存会員は従来どおり`GET /members`で表示し、未登録者だけ登録画面へ進む。
 - 旧`fr-agaruke`のデータは削除せず、ロールバック用に保持する。GAS、Kiosk、モバイルオーダーAPIの切替は別工程。
 - 初回切替revisionで`LINE_LOGIN_CHANNEL_ID`が未設定だったため、members siteの実LIFFアクセスが`INVALID_TOKEN`になった。2026-09-05に本番LIFF IDと対応するChannel IDをCloud Runへ設定し、revision `members-api-00038-c5n`を100%配信した。ヘルスチェックHTTP 200、Firestore権限エラー・panicなしを確認した。
+- Kiosk API `orderec-kiosk-api-00046-6xv`は切替前から同じmembers API本番URLを参照し、`MEMBERS_SERVICE_KEY`もmembers APIと一致していた。会員・トークン・クーポン処理はmembers API経由のため、members APIのorganization layout切替によりKiosk側の保存先も同時に新organizationへ切り替わる。Kiosk APIの再デプロイは不要。共有キー付きの無書込対照試験で`INVALID_BODY`まで到達し内部認証成功、`api.kiosk.orderec.com`のヘルスチェックHTTP 200、直近エラーログなしを確認した。
 
 ## 本番切替
 
